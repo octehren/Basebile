@@ -21,7 +21,7 @@ local transitionTimeInMiliseconds = 500;
 --[[ images & image groups ]]
 local animationBall = display.newImage("bigBall.png"); animationBall.anchorX = 0.5;
 local groundForPlayer = display.newImage("groundForPlayer0.png"); groundForPlayer.rotation = 180; groundForPlayer.anchorY = 0;
-local groundForThrower = display.newImage("groundForThrower.png"); groundForThrower.anchorY = 0;
+local groundForThrower = display.newImage("groundForThrower.png"); --groundForThrower.anchorY = 0;
 local startSceneGroup = display.newGroup();
 local gameSceneGroup = display.newGroup();
 local livesGroup = display.newGroup();
@@ -37,6 +37,7 @@ local audio7 = audio.loadSound("soundGameOver.wav");
 local audio8 = audio.loadSound("soundWoosh.mp3");
 local audio9 = audio.loadSound("soundStreakBoost.wav");
 local audio10 = audio.loadSound("soundMissedBall.wav");
+local audio11 = audio.loadSound("soundHitCrowdCheer.mp3");
 local soundBatting = audio1;
 local soundGameOn = audio2;
 local soundCountdown = audio3;
@@ -47,6 +48,7 @@ local soundGameOver = audio7;
 local soundWoosh = audio8;
 local soundStreakBoost = audio9;
 local soundMissedBall = audio10;
+local soundHitCrowdCheer = audio11;
 --[[ sprites & sprite data ]]
 --billy--
 local playerImageSheet = graphics.newImageSheet("billySprite.png", { width = 18, height = 41, numFrames = 4, sheetContentWidth = 72, sheetContentHeight = 41 } );
@@ -76,7 +78,7 @@ local balls = {};
 local totalBalls = 0;
 local ballToBeBattedIndex = 0;
 local throwBallIndex = 0;
-local initialBallPositionY = 100;
+local initialBallPositionY = throwerSprite.contentHeight + 30;
 local tooLateToBatBallPositionY = 300; -- ball cannot be hit anymore, misses
 local successfulBatBallY = 250; -- homerun hit
 local tooSoonToBatBallPositionY = 200; -- was hit too soon, misses
@@ -122,7 +124,8 @@ local function createInitialScene()
 	startSceneGroup:insert(bg); startSceneGroup:insert(billy); --startSceneGroup:insert(playBtn);
 	-- adds game background to future use game group;
 	local function displaySoundButton()
-		audio.play(soundWoosh);
+		audio.play(soundHitCrowdCheer);
+		playBtn:addEventListener("tap", goToGameScene);
 	end
 	local function displayPlayButton() -- executed at the end of billy transition
 		audio.play(soundWoosh);
@@ -131,10 +134,11 @@ local function createInitialScene()
 	end
 	audio.play(soundWoosh);
 	transition.to(billy, {time = 500, x = visibleDisplaySizeX + screenOffsetX, onComplete = displayPlayButton });
-	playBtn:addEventListener("tap", goToGameScene);
+	--playBtn:addEventListener("tap", goToGameScene);
 end
 
 function goToGameScene() -- first load of game scene
+	audio.stop();
 	playBtn:removeEventListener("tap", goToGameScene);
 	missesUntilOut = 3;
 	local bg = display.newImage("gameFieldBG.png");
@@ -153,7 +157,7 @@ function goToGameScene() -- first load of game scene
 	totalBalls = #balls;
 	print(totalBalls);
 	transition.to(groundForPlayer, { y = centerY * 2 - 36, time = transitionTimeInMiliseconds });
-	transition.to(groundForThrower, { y = 30, time = transitionTimeInMiliseconds });
+	transition.to(groundForThrower, { y = initialBallPositionY, time = transitionTimeInMiliseconds });
 	transition.to(bg, { time = transitionTimeInMiliseconds, y = visibleDisplaySizeY, onComplete = function() displayPlayerAndOpponent(); createLivesGroup(); end });
 end
 
@@ -186,6 +190,7 @@ end
 
 --[[ animations & transitions ]]
 function animateBall() --ball animation for scene transition
+	audio.play(soundBallMedium);
 	animationBall.y = screenOffsetY; animationBall.xScale = ballContentScale; 
 	animationBall.yScale = ballContentScale; animationBall.x = centerX; animationBall.rotation = 0;
 	animationBall:toFront();
@@ -197,7 +202,7 @@ function displayPlayerAndOpponent()
 	playerSprite:toFront();
 	throwerSprite.anchorY = 1; throwerSprite.y = -10; throwerSprite.x = centerX - (0.25 * throwerSprite.contentHeight / 4) -- 4 here = the number of sprites in throwerSprite
 	throwerSprite:toFront();
-	initialBallPositionY = throwerSprite.contentHeight + 20;
+	--initialBallPositionY = throwerSprite.contentHeight + 20;
 	local function playerOpponentGetStill()
 		playerSprite.anchorX = 1; playerSprite.x = centerX;
 		playerSprite:setSequence( "still" );
@@ -300,6 +305,9 @@ function bat(event)
 						if battingStreak % 3 == 0 then
 							if battingStreak % 6 == 0 then
 								restoreOneLife();
+								-- 'extra point' animation
+							else
+								-- 'extra point & extra life' animation
 							end
 							pointsAwardedPerBat = pointsAwardedPerBat + 1;
 							audio.play(soundStreakBoost);
@@ -314,12 +322,12 @@ end
 
 function playerMissedBall()
 	removeOneLife();
-	if missesUntilOut == 0 then
-		displayGameOver();
-	end
 	battingStreak = 0;
 	pointsAwardedPerBat = 1;
 	audio.play(soundMissedBall);
+	if missesUntilOut == 0 then
+		displayGameOver();
+	end
 end
 --[[ lives-handling functions ]]
 function createLivesGroup()
@@ -344,10 +352,6 @@ function createLivesGroup()
 	end
 end
 
-function repositionLivesGroup()
-	livesGroup.x = 0; livesGroup.y = 0; livesGroup.xScale = 200; livesGroup:toFront();
-end
-
 function restoreOneLife()
 	if missesUntilOut < 3 then
 		missesUntilOut = missesUntilOut + 1;
@@ -356,8 +360,8 @@ function restoreOneLife()
 end
 
 function removeOneLife()
+	outsArray[missesUntilOut].isVisible = true;
 	missesUntilOut = missesUntilOut - 1;
-	outsArray[missesUntilOut + 1].isVisible = true;
 end
 
 function restoreAllLives()
