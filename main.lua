@@ -25,6 +25,28 @@ local groundForThrower = display.newImage("groundForThrower.png"); groundForThro
 local startSceneGroup = display.newGroup();
 local gameSceneGroup = display.newGroup();
 local livesGroup = display.newGroup();
+--[[ audio files ]]
+local soundIsOn = true;
+local audio1 = audio.loadSound("soundBatting.mp3");
+local audio2 = audio.loadSound("soundGameOn.wav");
+local audio3 = audio.loadSound("soundCountdown.mp3");
+local audio4 = audio.loadSound("soundBallSlow.wav");
+local audio5 = audio.loadSound("soundBallMedium.wav");
+local audio6 = audio.loadSound("soundBallFast.wav");
+local audio7 = audio.loadSound("soundGameOver.wav");
+local audio8 = audio.loadSound("soundWoosh.mp3");
+local audio9 = audio.loadSound("soundStreakBoost.wav");
+local audio10 = audio.loadSound("soundMissedBall.wav");
+local soundBatting = audio1;
+local soundGameOn = audio2;
+local soundCountdown = audio3;
+local soundBallSlow = audio4;
+local soundBallMedium = audio5;
+local soundBallFast = audio6;
+local soundGameOver = audio7;
+local soundWoosh = audio8;
+local soundStreakBoost = audio9;
+local soundMissedBall = audio10;
 --[[ sprites & sprite data ]]
 --billy--
 local playerImageSheet = graphics.newImageSheet("billySprite.png", { width = 18, height = 41, numFrames = 4, sheetContentWidth = 72, sheetContentHeight = 41 } );
@@ -60,10 +82,12 @@ local successfulBatBallY = 250; -- homerun hit
 local tooSoonToBatBallPositionY = 200; -- was hit too soon, misses
 local ballMaxThrowSpeed = 2000;
 local ballMinThrowSpeed = 600;
---[[ lives ]]
+--[[ lives and score ]]
 local missesUntilOut;
 local livesArray = {};
 local outsArray = {};
+local battingStreak = 0; -- replenishes life and adds 1 to score at every 5x batting streak
+local pointsAwardedPerBat = 1; -- + 1 at each 5x batting streak
 --[[ forward function references ]]
 local animateBall;
 local transitionToGameScene;
@@ -75,6 +99,8 @@ local createLivesGroup;
 local repositionLivesGroup;
 local removeOneLife;
 local restoreAllLives;
+local turnSoundOnOrOff;
+
 --[[ timers ]]
 local throwBallAnimationTimer; -- the animation to throw the ball
 local throwingBallTimer; -- actual throw of ball
@@ -95,12 +121,15 @@ local function createInitialScene()
 	-- adds above elements to startSceneGroup so they can be moved all at once
 	startSceneGroup:insert(bg); startSceneGroup:insert(billy); --startSceneGroup:insert(playBtn);
 	-- adds game background to future use game group;
-
-	local function displayPlayButton() -- executed at the end of billy transition
-		playBtn.x = centerX * 7; playBtn.y = centerY * 7; playBtn.xScale = 5; playBtn.yScale = 5;
-		transition.to(playBtn, {time = 500, x = centerX * 2 - visibleDisplaySizeX - 10, y = visibleDisplaySizeY - 20, xScale = 1, yScale = 1});
+	local function displaySoundButton()
+		audio.play(soundWoosh);
 	end
-
+	local function displayPlayButton() -- executed at the end of billy transition
+		audio.play(soundWoosh);
+		playBtn.x = centerX * 7; playBtn.y = centerY * 7; playBtn.xScale = 5; playBtn.yScale = 5;
+		transition.to(playBtn, {time = 500, x = centerX * 2 - visibleDisplaySizeX - 10, y = visibleDisplaySizeY - 20, xScale = 1, yScale = 1, onComplete = displaySoundButton });
+	end
+	audio.play(soundWoosh);
 	transition.to(billy, {time = 500, x = visibleDisplaySizeX + screenOffsetX, onComplete = displayPlayButton });
 	playBtn:addEventListener("tap", goToGameScene);
 end
@@ -152,6 +181,7 @@ function displayGameOver()
 	playBtn:toFront();
 	Runtime:removeEventListener("tap", bat);
 	Runtime:removeEventListener("accelerometer", bat);
+	audio.play(soundGameOver);
 end
 
 --[[ animations & transitions ]]
@@ -192,6 +222,7 @@ function oneTwoThreeGameStart()
 	local infoBox = display.newImage("infoBox.png"); infoBox.x = centerX; infoBox.y = centerY; infoBox.isVisible = false;
 
 	local function displayGameStartAndThrowFirstBall()
+		audio.play(soundGameOn);
 		infoBox.isVisible = true;
 		local function shakeInfoBox4()
 			transition.to( infoBox, { rotation = -20, xScale = 1.3, yScale = 1.3, alpha = 0, time = 250, onComplete = throwBallAnimation } );
@@ -205,14 +236,17 @@ function oneTwoThreeGameStart()
 		transition.to( infoBox, { rotation = 20, xScale = 1.3, yScale = 1.3, time = 250, onComplete = shakeInfoBox2 } );
 	end
 	local function three()
+		audio.play(soundCountdown);
 		threeImg.xScale = 0.5; threeImg.yScale = 0.5; threeImg.rotation = 270; threeImg.isVisible = true;
 		transition.to( threeImg, { rotation = 0, xScale = 1, yScale = 1, alpha = 0, time = 350, onComplete = displayGameStartAndThrowFirstBall } );
 	end
 	local function two()
+		audio.play(soundCountdown);
 		twoImg.xScale = 0.5; twoImg.yScale = 0.5; twoImg.rotation = 270; twoImg.isVisible = true;
 		transition.to( twoImg, { rotation = 0, xScale = 1, yScale = 1, alpha = 0, time = 350, onComplete = three } );
 	end
 	local function one()
+		audio.play(soundCountdown);
 		oneImg.xScale = 0.5; oneImg.yScale = 0.5; oneImg.rotation = 270; oneImg.isVisible = true;
 		transition.to( oneImg, { rotation = 0, xScale = 1, yScale = 1, alpha = 0, time = 350, onComplete = two } );
 	end
@@ -229,6 +263,13 @@ function throwBallAnimation()
 			local ballSpeed = math.random(ballMinThrowSpeed, ballMaxThrowSpeed);
 			balls[throwBallIndex]:toFront();
 			balls[throwBallIndex]:throw(ballSpeed);
+			if ballSpeed > 1250 then
+				audio.play(soundBallSlow);
+			elseif ballSpeed > 700 then
+				audio.play(soundBallMedium);
+			else
+				audio.play(soundBallFast);
+			end
 			throwBallIndex = (throwBallIndex + 1) % totalBalls;
 			if ballMaxThrowSpeed > 500 then
 				ballMaxThrowSpeed = ballMaxThrowSpeed - 4;
@@ -242,17 +283,29 @@ function throwBallAnimation()
 end
 
 --[[ gameplay & game logic ]]
-function bat()
-	playerSprite:setSequence( "bat" );
-	timer.cancel(setupStillAnimationTimer);
-	setupStillAnimationTimer = timer.performWithDelay(300, function() playerSprite:setSequence("still"); playerSprite:play(); end); -- 250 = bat sequence duration
-	playerSprite:play();
-	for i = 0, totalBalls do
-		if balls[i].isVisible then
-			if balls[i].y >= successfulBatBallY then
-				if balls[i].y <= tooLateToBatBallPositionY then
-					balls[i]:successfulHit();
-					--return;
+function bat(event)
+	if event.name == "tap" or event.isShake then
+		audio.play(soundWoosh);
+		playerSprite:setSequence( "bat" );
+		timer.cancel(setupStillAnimationTimer);
+		setupStillAnimationTimer = timer.performWithDelay(300, function() playerSprite:setSequence("still"); playerSprite:play(); end); -- 250 = bat sequence duration
+		playerSprite:play();
+		for i = 0, totalBalls do
+			if balls[i].isVisible then
+				if balls[i].y >= successfulBatBallY then
+					if balls[i].y <= tooLateToBatBallPositionY then
+						audio.play(soundBatting);
+						balls[i]:successfulHit();
+						battingStreak = battingStreak + 1;
+						if battingStreak % 3 == 0 then
+							if battingStreak % 6 == 0 then
+								restoreOneLife();
+							end
+							pointsAwardedPerBat = pointsAwardedPerBat + 1;
+							audio.play(soundStreakBoost);
+						end
+						--return;
+					end
 				end
 			end
 		end
@@ -260,19 +313,18 @@ function bat()
 end
 
 function playerMissedBall()
-	missesUntilOut = missesUntilOut - 1;
 	removeOneLife();
 	if missesUntilOut == 0 then
 		displayGameOver();
 	end
+	battingStreak = 0;
+	pointsAwardedPerBat = 1;
+	audio.play(soundMissedBall);
 end
 --[[ lives-handling functions ]]
 function createLivesGroup()
-	--livesGroup.anchorY = centerY; livesGroup.anchorX = centerX; livesGroup.x = 0; livesGroup.y = 0;
 	for i = 1, 3 do
-		print("i: " .. i)
 		outsArray[i] = display.newImage("out.png");
-		--livesGroup:insert(outsArray[i]);
 		outsArray[i].anchorX = 0; outsArray[i].anchorY = 0;
 		outsArray[i].x = 5 + outsArray[i].contentWidth * i;
 		outsArray[i].y = 5; --outsArray[i].contentHeight;
@@ -284,14 +336,12 @@ function createLivesGroup()
 	end
 	for i = 1, 3 do
 		livesArray[i] = display.newImage("ball.png");
-		--livesGroup:insert(livesArray[i]);
 		resizeLives(livesArray[i]);
 		livesArray[i].anchorX = 0; livesArray[i].anchorY = 0;
 		livesArray[i].x = 5 + livesArray[i].contentWidth * i;
 		livesArray[i].y = 5; --livesArray[i].contentHeight;
 		outsArray[i]:toFront();
 	end
-	--livesGroup:toFront();
 end
 
 function repositionLivesGroup()
@@ -299,16 +349,49 @@ function repositionLivesGroup()
 end
 
 function restoreOneLife()
-	outsArray[missesUntilOut + 1].isVisible = false;
+	if missesUntilOut < 3 then
+		missesUntilOut = missesUntilOut + 1;
+		outsArray[missesUntilOut].isVisible = false;
+	end
 end
 
 function removeOneLife()
+	missesUntilOut = missesUntilOut - 1;
 	outsArray[missesUntilOut + 1].isVisible = true;
 end
 
 function restoreAllLives()
 	for i = 1, 3 do
 		outsArray[i].isVisible = false;
+	end
+end
+
+--[[ sound-handling function ]]
+function turnSoundOnOrOff()
+	if soundIsOn then
+		soundIsOn = false;
+		soundBatting = nil;
+		soundGameOn = nil;
+		soundCountdown = nil;
+		soundBallSlow = nil;
+		soundBallMedium = nil;
+		soundBallFast = nil;
+		soundGameOver = nil
+		soundWoosh = nil;
+		soundStreakBoost = nil;
+		soundMissedBall = nil;
+	else
+		soundIsOn = true;
+		soundBatting = audio1;
+		soundGameOn = audio2;
+		soundCountdown = audio3;
+		soundBallSlow = audio4;
+		soundBallMedium = audio5;
+		soundBallFast = audio6;
+		soundGameOver = audio7;
+		soundWoosh = audio8;
+		soundStreakBoost = audio9;
+		soundMissedBall = audio10;
 	end
 end
 
