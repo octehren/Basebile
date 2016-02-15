@@ -20,7 +20,7 @@ local screenOffsetY = centerY * 2 - visibleDisplaySizeY;
 local transitionTimeInMiliseconds = 500;
 --[[ images & image groups ]]
 local animationBall = display.newImage("bigBall.png"); animationBall.anchorX = 0.5;
-local groundForPlayer = display.newImage("groundForPlayer.png"); groundForPlayer.rotation = 180; groundForPlayer.anchorY = 0;
+local groundForPlayer = display.newImage("groundForPlayer0.png"); groundForPlayer.rotation = 180; groundForPlayer.anchorY = 0;
 local groundForThrower = display.newImage("groundForThrower.png"); groundForThrower.anchorY = 0;
 local startSceneGroup = display.newGroup();
 local gameSceneGroup = display.newGroup();
@@ -62,8 +62,8 @@ local ballMaxThrowSpeed = 2000;
 local ballMinThrowSpeed = 600;
 --[[ lives ]]
 local missesUntilOut;
-local livesArray = {display.newImage("ball.png"), display.newImage("ball.png"), display.newImage("ball.png") };
-local outsArray = { display.newImage("out.png"), display.newImage("out.png"), display.newImage("out.png") }
+local livesArray = {};
+local outsArray = {};
 --[[ forward function references ]]
 local animateBall;
 local transitionToGameScene;
@@ -73,6 +73,8 @@ playerMissedBall = nil; -- used in 'ball.lua', needs to be global.
 local repositionGameSceneElements;
 local createLivesGroup;
 local repositionLivesGroup;
+local removeOneLife;
+local restoreAllLives;
 --[[ timers ]]
 local throwBallAnimationTimer; -- the animation to throw the ball
 local throwingBallTimer; -- actual throw of ball
@@ -131,6 +133,7 @@ function recreateGameScene() -- second+ loads of game scene
 	playerSprite.y = visibleDisplaySizeY + 100; throwerSprite.y = -10;
 	playBtn:toBack();
 	missesUntilOut = 3;
+	restoreAllLives();
 	animateBall();
 	timer.performWithDelay(transitionTimeInMiliseconds, displayPlayerAndOpponent);
 end
@@ -258,35 +261,55 @@ end
 
 function playerMissedBall()
 	missesUntilOut = missesUntilOut - 1;
-	print(missesUntilOut);
+	removeOneLife();
 	if missesUntilOut == 0 then
 		displayGameOver();
 	end
 end
 --[[ lives-handling functions ]]
 function createLivesGroup()
+	--livesGroup.anchorY = centerY; livesGroup.anchorX = centerX; livesGroup.x = 0; livesGroup.y = 0;
+	for i = 1, 3 do
+		print("i: " .. i)
+		outsArray[i] = display.newImage("out.png");
+		--livesGroup:insert(outsArray[i]);
+		outsArray[i].anchorX = 0; outsArray[i].anchorY = 0;
+		outsArray[i].x = 5 + outsArray[i].contentWidth * i;
+		outsArray[i].y = 5; --outsArray[i].contentHeight;
+		outsArray[i].isVisible = false; -- outsArray[i]:toFront();
+	end
 	local function resizeLives(life)
 		life.xScale = outsArray[1].contentWidth / life.contentWidth;
 		life.yScale = outsArray[1].contentHeight / life.contentHeight;
 	end
 	for i = 1, 3 do
+		livesArray[i] = display.newImage("ball.png");
+		--livesGroup:insert(livesArray[i]);
 		resizeLives(livesArray[i]);
-		livesArray[i].anchorX = 0; livesArray.anchorY = 0;
-		livesArray.x = livesArray[i].contentWidth * (i - 1) + 5;
-		livesArray[i].y = 5;
-		livesGroup:insert(livesArray[i]);
+		livesArray[i].anchorX = 0; livesArray[i].anchorY = 0;
+		livesArray[i].x = 5 + livesArray[i].contentWidth * i;
+		livesArray[i].y = 5; --livesArray[i].contentHeight;
+		outsArray[i]:toFront();
 	end
-	for i = 1, 3 do
-		outsArray[i].anchorX = 0; outsArray.anchorY = 0;
-		outsArray.x = outsArray[i].contentWidth * (i - 1) + 5;
-		outsArray[i].y = 5;
-		livesGroup:insert(outsArray[i]);
-	end
-	livesGroup.anchorY = 0; livesGroup.anchorX = 0;
+	--livesGroup:toFront();
 end
 
 function repositionLivesGroup()
 	livesGroup.x = 0; livesGroup.y = 0; livesGroup.xScale = 200; livesGroup:toFront();
+end
+
+function restoreOneLife()
+	outsArray[missesUntilOut + 1].isVisible = false;
+end
+
+function removeOneLife()
+	outsArray[missesUntilOut + 1].isVisible = true;
+end
+
+function restoreAllLives()
+	for i = 1, 3 do
+		outsArray[i].isVisible = false;
+	end
 end
 
 createInitialScene();
