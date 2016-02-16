@@ -183,7 +183,7 @@ function displayGameOver()
 	end
 	playBtn:addEventListener("tap", recreateGameScene);
 	playBtn:toFront();
-	Runtime:removeEventListener("tap", bat);
+	Runtime:removeEventListener("touch", bat);
 	Runtime:removeEventListener("accelerometer", bat);
 	audio.play(soundGameOver);
 end
@@ -209,7 +209,7 @@ function displayPlayerAndOpponent()
 		playerSprite:play();
 		throwerSprite:setSequence( "still" );
 		throwerSprite:play();
-		Runtime:addEventListener( "tap", bat );
+		Runtime:addEventListener( "touch", bat );
 		Runtime:addEventListener( "accelerometer", bat ); -- bats on shaking phone
 		successfulBatBallY = playerSprite.y - (balls[0].contentHeight / 2) - playerSprite.contentHeight;
 		tooLateToBatBallPositionY = playerSprite.y - (playerSprite.contentHeight / 2);
@@ -289,7 +289,7 @@ end
 
 --[[ gameplay & game logic ]]
 function bat(event)
-	if event.name == "tap" or event.isShake then
+	if event.phase == "began" or event.isShake then
 		audio.play(soundWoosh);
 		playerSprite:setSequence( "bat" );
 		timer.cancel(setupStillAnimationTimer);
