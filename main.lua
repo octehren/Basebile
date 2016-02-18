@@ -51,11 +51,11 @@ local soundMissedBall = audio10;
 local soundHitCrowdCheer = audio11;
 --[[ sprites & sprite data ]]
 --billy--
-local playerImageSheet = graphics.newImageSheet("billySprite.png", { width = 18, height = 41, numFrames = 4, sheetContentWidth = 72, sheetContentHeight = 41 } );
+local playerImageSheet = graphics.newImageSheet("billySprite0.png", { width = 18, height = 41, numFrames = 4, sheetContentWidth = 72, sheetContentHeight = 41 } );
 local playerImageDataWalk = { name = "walk", sheet = playerImageSheet, start = 3, count = 2, time = 250 };
 local playerImageDataStill = { name = "still", sheet = playerImageSheet, start = 1, count = 2, time = 500 };
 --billy batting--
-local playerBattingImageSheet = graphics.newImageSheet("billySpriteBatting.png", { width = 25, height = 41, numFrames = 4, sheetContentWidth = 100, sheetContentHeight = 41 } );
+local playerBattingImageSheet = graphics.newImageSheet("billySpriteBatting0.png", { width = 25, height = 41, numFrames = 4, sheetContentWidth = 100, sheetContentHeight = 41 } );
 local playerImageDataBatting = { name = "bat", sheet = playerBattingImageSheet, start = 1, count = 4, loopCount = 1, time = 300 };
 --billy sprite--
 local playerSprite = display.newSprite(playerImageSheet, { playerImageDataWalk, playerImageDataStill, playerImageDataBatting });
@@ -82,12 +82,13 @@ local initialBallPositionY = throwerSprite.contentHeight + 30;
 local tooLateToBatBallPositionY = 300; -- ball cannot be hit anymore, misses
 local successfulBatBallY = 250; -- homerun hit
 local tooSoonToBatBallPositionY = 200; -- was hit too soon, misses
-local ballMaxThrowSpeed = 2000;
-local ballMinThrowSpeed = 600;
+local ballMaxThrowSpeed = 2400;
+local ballMinThrowSpeed = 900;
 --[[ lives and score ]]
 local missesUntilOut;
 local livesArray = {};
 local outsArray = {};
+local score = 0;
 local battingStreak = 0; -- replenishes life and adds 1 to score at every 5x batting streak
 local pointsAwardedPerBat = 1; -- + 1 at each 5x batting streak
 --[[ forward function references ]]
@@ -102,7 +103,13 @@ local repositionLivesGroup;
 local removeOneLife;
 local restoreAllLives;
 local turnSoundOnOrOff;
-
+local displayAndPositionScore;
+local displayScoreAdder;
+local displayScoreAndLifeAdder;
+--[[ font-handling ]]
+local scoreText = display.newText("0", centerX * 2 - 15, 5, "PixTall", 32); scoreText.isVisible = false;
+local scoreAdderText = display.newText("x2", centerX, centerY, "PixTall", 40); scoreAdderText.alpha = 0;
+local extraLifeText = display.newText("EXTRA CHANCE!", centerX, centerY, "PixTall", 40); extraLifeText.alpha = 0;
 --[[ timers ]]
 local throwBallAnimationTimer; -- the animation to throw the ball
 local throwingBallTimer; -- actual throw of ball
@@ -134,7 +141,6 @@ local function createInitialScene()
 	end
 	audio.play(soundWoosh);
 	transition.to(billy, {time = 500, x = visibleDisplaySizeX + screenOffsetX, onComplete = displayPlayButton });
-	--playBtn:addEventListener("tap", goToGameScene);
 end
 
 function goToGameScene() -- first load of game scene
@@ -155,10 +161,10 @@ function goToGameScene() -- first load of game scene
 	end
 	gameSceneGroup:toFront();
 	totalBalls = #balls;
-	print(totalBalls);
+	scoreText.isVisible = true; scoreText:toFront();
 	transition.to(groundForPlayer, { y = centerY * 2 - 36, time = transitionTimeInMiliseconds });
 	transition.to(groundForThrower, { y = initialBallPositionY, time = transitionTimeInMiliseconds });
-	transition.to(bg, { time = transitionTimeInMiliseconds, y = visibleDisplaySizeY, onComplete = function() displayPlayerAndOpponent(); createLivesGroup(); end });
+	transition.to(bg, { time = transitionTimeInMiliseconds, y = visibleDisplaySizeY, onComplete = function() displayPlayerAndOpponent(); createLivesGroup(); displayAndPositionScore(); end });
 end
 
 function recreateGameScene() -- second+ loads of game scene
@@ -166,6 +172,10 @@ function recreateGameScene() -- second+ loads of game scene
 	playerSprite.y = visibleDisplaySizeY + 100; throwerSprite.y = -10;
 	playBtn:toBack();
 	missesUntilOut = 3;
+	score = 0;
+	ballMaxThrowSpeed = 2400;
+	ballMinThrowSpeed = 900;
+	scoreText.text = score;
 	restoreAllLives();
 	animateBall();
 	timer.performWithDelay(transitionTimeInMiliseconds, displayPlayerAndOpponent);
@@ -176,8 +186,6 @@ function displayGameOver()
 	timer.cancel(throwBallAnimationTimer);
 	timer.cancel(throwingBallTimer);
 	throwerSprite:setSequence("still"); throwerSprite:play(); -- there's a tiny window of time in which timer that makes thrower still gets canceled
-	ballMaxThrowSpeed = 2000;
-	ballMinThrowSpeed = 600;
 	for i = 0, totalBalls do
 		balls[i].isVisible = false; balls[i].xScale = 1; balls[i].yScale = 1;
 	end
@@ -268,9 +276,9 @@ function throwBallAnimation()
 			local ballSpeed = math.random(ballMinThrowSpeed, ballMaxThrowSpeed);
 			balls[throwBallIndex]:toFront();
 			balls[throwBallIndex]:throw(ballSpeed);
-			if ballSpeed > 1250 then
+			if ballSpeed > 1300 then
 				audio.play(soundBallSlow);
-			elseif ballSpeed > 700 then
+			elseif ballSpeed > 900 then
 				audio.play(soundBallMedium);
 			else
 				audio.play(soundBallFast);
@@ -301,13 +309,21 @@ function bat(event)
 					if balls[i].y <= tooLateToBatBallPositionY then
 						audio.play(soundBatting);
 						balls[i]:successfulHit();
+						score = score + pointsAwardedPerBat;
+						scoreText.text = score;
 						battingStreak = battingStreak + 1;
 						if battingStreak % 3 == 0 then
 							if battingStreak % 6 == 0 then
-								restoreOneLife();
-								-- 'extra point' animation
-							else
 								-- 'extra point & extra life' animation
+								if missesUntilOut < 3 then
+									displayScoreAndLifeAdder();
+									restoreOneLife();
+								else
+									displayScoreAdder();
+								end
+							else
+								-- 'extra point' animation
+								displayScoreAdder();
 							end
 							pointsAwardedPerBat = pointsAwardedPerBat + 1;
 							audio.play(soundStreakBoost);
@@ -353,10 +369,8 @@ function createLivesGroup()
 end
 
 function restoreOneLife()
-	if missesUntilOut < 3 then
-		missesUntilOut = missesUntilOut + 1;
-		outsArray[missesUntilOut].isVisible = false;
-	end
+	missesUntilOut = missesUntilOut + 1;
+	outsArray[missesUntilOut].isVisible = false;
 end
 
 function removeOneLife()
@@ -397,6 +411,31 @@ function turnSoundOnOrOff()
 		soundStreakBoost = audio9;
 		soundMissedBall = audio10;
 	end
+end
+
+--[[ font-handling functions ]]
+function displayAndPositionScore()
+	scoreText.anchorY = 0; scoreText.anchorX = 1;
+	scoreText.x = centerX * 2 - 30; 
+	scoreText.y = 5; 
+	scoreText.isVisible = true; 
+	scoreText:toFront();
+	scoreAdderText:toFront();
+	extraLifeText:toFront();
+end
+
+function displayScoreAdder()
+	scoreAdderText.y = centerY; scoreAdderText.alpha = 1;
+	scoreAdderText.text = "x" .. pointsAwardedPerBat + 1;
+	transition.to(scoreAdderText, {y = centerY - 80, alpha = 0, time = 500 });
+end
+
+function displayScoreAndLifeAdder()
+	scoreAdderText.y = centerY; scoreAdderText.alpha = 1;
+	scoreAdderText.text = "x" .. pointsAwardedPerBat + 1;
+	extraLifeText.y = centerY + 40; extraLifeText.alpha = 1;
+	transition.to(scoreAdderText, {y = centerY - 80, alpha = 0, time = 500 });
+	transition.to(extraLifeText, {y = centerY - 40, alpha = 0, time = 500 });
 end
 
 createInitialScene();

@@ -18,8 +18,8 @@ settings =
 	excludeFiles =
 	{
 		-- Include only the necessary icon files on each platform
-		iphone = { "Icon-*dpi.png", },
-		android = { "Icon.png", "Icon-Small-*.png", "Icon*@2x.png", },
+		iphone = { "Icon-*dpi.png", "billySpriteBatting1.png", "billySpriteBatting2.png", "billySpriteBatting3.png", "billySpriteBatting4.png", "throwerThrowingSprite1.png", "throwerThrowingSprite2.png", "throwerThrowingSprite3.png", "walkBillySprite1.png", "walkBillySprite2.png", "throwerSpriteStill1.png", "throwerSpriteStill2.png", "stillBillySprite1.png", "stillBillySprite2.png",},
+		android = { "Icon.png", "Icon-Small-*.png", "Icon*@2x.png", "billySpriteBatting1.png", "billySpriteBatting2.png", "billySpriteBatting3.png", "billySpriteBatting4.png", "throwerThrowingSprite1.png", "throwerThrowingSprite2.png", "throwerThrowingSprite3.png", "walkBillySprite1.png", "walkBillySprite2.png", "throwerSpriteStill1.png", "throwerSpriteStill2.png", "stillBillySprite1.png", "stillBillySprite2.png", },
 	},
 
 	--
