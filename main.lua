@@ -51,21 +51,21 @@ local soundMissedBall = audio10;
 local soundHitCrowdCheer = audio11;
 --[[ sprites & sprite data ]]
 --billy--
-local playerImageSheet = graphics.newImageSheet("billySprite0.png", { width = 18, height = 41, numFrames = 4, sheetContentWidth = 72, sheetContentHeight = 41 } );
+local playerImageSheet = graphics.newImageSheet("billySprite0.png", { width = 30, height = 62, numFrames = 4, sheetContentWidth = 121, sheetContentHeight = 62 } );
 local playerImageDataWalk = { name = "walk", sheet = playerImageSheet, start = 3, count = 2, time = 250 };
 local playerImageDataStill = { name = "still", sheet = playerImageSheet, start = 1, count = 2, time = 500 };
 --billy batting--
-local playerBattingImageSheet = graphics.newImageSheet("billySpriteBatting0.png", { width = 25, height = 41, numFrames = 4, sheetContentWidth = 100, sheetContentHeight = 41 } );
+local playerBattingImageSheet = graphics.newImageSheet("billySpriteBatting0.png", { width = 38, height = 62, numFrames = 4, sheetContentWidth = 152, sheetContentHeight = 62 } );
 local playerImageDataBatting = { name = "bat", sheet = playerBattingImageSheet, start = 1, count = 4, loopCount = 1, time = 300 };
 --billy sprite--
 local playerSprite = display.newSprite(playerImageSheet, { playerImageDataWalk, playerImageDataStill, playerImageDataBatting });
 
 --thrower--
-local throwerImageSheet = graphics.newImageSheet("throwerSprite.png", {width = 30, height = 41, numFrames = 4, sheetContentWidth = 120, sheetContentHeight = 41 } );
+local throwerImageSheet = graphics.newImageSheet("throwerSprite0.png", {width = 33, height = 45, numFrames = 4, sheetContentWidth = 132, sheetContentHeight = 45 } );
 local throwerImageDataWalk = { name = "walk", sheet = throwerImageSheet, start = 3, count = 2, time = 250 };
 local throwerImageDataStill = { name = "still", sheet = throwerImageSheet, start = 1, count = 2, time = 500 };
 --thrower throwing
-local throwerThrowingImageSheet = graphics.newImageSheet("throwerThrowingSprite.png", { width = 30, height = 41, numFrames = 3, sheetContentWidth = 90, sheetContentHeight = 41 });
+local throwerThrowingImageSheet = graphics.newImageSheet("throwerThrowingSprite0.png", { width = 33, height = 45, numFrames = 3, sheetContentWidth = 99, sheetContentHeight = 45 });
 local throwerImageDataThrowing = { name = "throw", sheet = throwerThrowingImageSheet, start = 1, count = 3, time = 300 };
 --thrower sprite--
 local throwerSprite = display.newSprite(throwerImageSheet, { throwerImageDataWalk, throwerImageDataStill, throwerImageDataThrowing } );
@@ -91,6 +91,10 @@ local outsArray = {};
 local score = 0;
 local battingStreak = 0; -- replenishes life and adds 1 to score at every 5x batting streak
 local pointsAwardedPerBat = 1; -- + 1 at each 5x batting streak
+local highscore = 0;
+--[[ high-score & game over screen ]]
+local highscoreContainer = display.newRoundedRect(centerX, centerY, 200, 300, 10);
+highscoreContainer.strokeWidth = 8; highscoreContainer:setStrokeColor(1,0.95,0.1); highscoreContainer:setFillColor(0.2, 0.4, 0.9);
 --[[ forward function references ]]
 local animateBall;
 local transitionToGameScene;
