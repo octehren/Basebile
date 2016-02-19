@@ -25,6 +25,7 @@ local groundForThrower = display.newImage("groundForThrower.png"); --groundForTh
 local startSceneGroup = display.newGroup();
 local gameSceneGroup = display.newGroup();
 local livesGroup = display.newGroup();
+local gameOverPopupGroup = display.newGroup();
 --[[ audio files ]]
 local soundIsOn = true;
 local audio1 = audio.loadSound("soundBatting.mp3");
@@ -84,6 +85,7 @@ local successfulBatBallY = 250; -- homerun hit
 local tooSoonToBatBallPositionY = 200; -- was hit too soon, misses
 local ballMaxThrowSpeed = 2400;
 local ballMinThrowSpeed = 900;
+local playerIsBatting = false;
 --[[ lives and score ]]
 local missesUntilOut;
 local livesArray = {};
@@ -94,7 +96,7 @@ local pointsAwardedPerBat = 1; -- + 1 at each 5x batting streak
 local highscore = 0;
 --[[ high-score & game over screen ]]
 local highscoreContainer = display.newRoundedRect(centerX, centerY, 200, 300, 10);
-highscoreContainer.strokeWidth = 8; highscoreContainer:setStrokeColor(1,0.95,0.1); highscoreContainer:setFillColor(0.2, 0.4, 0.9);
+highscoreContainer.strokeWidth = 8; highscoreContainer:setStrokeColor(1, 0.95, 0.1); highscoreContainer:setFillColor(0.2, 0.4, 0.9);
 --[[ forward function references ]]
 local animateBall;
 local transitionToGameScene;
@@ -110,10 +112,18 @@ local turnSoundOnOrOff;
 local displayAndPositionScore;
 local displayScoreAdder;
 local displayScoreAndLifeAdder;
+local presentAndPopulateGameOverPopup;
+local dismissGameOverPopup;
+local loadHighscore;
+local updateScores;
 --[[ font-handling ]]
 local scoreText = display.newText("0", centerX * 2 - 15, 5, "PixTall", 32); scoreText.isVisible = false;
-local scoreAdderText = display.newText("x2", centerX, centerY, "PixTall", 40); scoreAdderText.alpha = 0;
-local extraLifeText = display.newText("EXTRA CHANCE!", centerX, centerY, "PixTall", 40); extraLifeText.alpha = 0;
+local scoreAdderText = display.newText("x2", centerX, -centerY, "PixTall", 40);
+local extraLifeText = display.newText("EXTRA CHANCE!", centerX, -100, "PixTall", 40); extraLifeText.alpha = 0;
+local scoreLabel = display.newText("SCORE:", centerX, -50, "PixTall", 32);
+local highscoreLabel = display.newText("HIGH SCORE:", centerX, 5, "PixTall", 32);
+local displayScorePointsLabel = display.newText("0", centerX, -100, "PixTall", 32);
+local displayHighscorePointsLabel = display.newText("0", centerX, -50, "PixTall", 32);
 --[[ timers ]]
 local throwBallAnimationTimer; -- the animation to throw the ball
 local throwingBallTimer; -- actual throw of ball
@@ -144,6 +154,7 @@ local function createInitialScene()
 		transition.to(playBtn, {time = 500, x = centerX * 2 - visibleDisplaySizeX - 10, y = visibleDisplaySizeY - 20, xScale = 1, yScale = 1, onComplete = displaySoundButton });
 	end
 	audio.play(soundWoosh);
+	createGameOverPopup();
 	transition.to(billy, {time = 500, x = visibleDisplaySizeX + screenOffsetX, onComplete = displayPlayButton });
 end
 
@@ -171,7 +182,7 @@ function goToGameScene() -- first load of game scene
 	transition.to(bg, { time = transitionTimeInMiliseconds, y = visibleDisplaySizeY, onComplete = function() displayPlayerAndOpponent(); createLivesGroup(); displayAndPositionScore(); end });
 end
 
-function recreateGameScene() -- second+ loads of game scene
+function recreateGameScene() -- second+ presentation of game scene
 	playBtn:removeEventListener("tap", recreateGameScene);
 	playerSprite.y = visibleDisplaySizeY + 100; throwerSprite.y = -10;
 	playBtn:toBack();
@@ -182,6 +193,7 @@ function recreateGameScene() -- second+ loads of game scene
 	scoreText.text = score;
 	restoreAllLives();
 	animateBall();
+	dismissGameOverPopup();
 	timer.performWithDelay(transitionTimeInMiliseconds, displayPlayerAndOpponent);
 end
 
@@ -198,6 +210,16 @@ function displayGameOver()
 	Runtime:removeEventListener("touch", bat);
 	Runtime:removeEventListener("accelerometer", bat);
 	audio.play(soundGameOver);
+	presentAndPopulateGameOverPopup();
+end
+
+function createGameOverPopup()
+	gameOverPopupGroup:insert(highscoreContainer);
+	gameOverPopupGroup:insert(scoreLabel); scoreLabel.y = 115;
+	gameOverPopupGroup:insert(displayScorePointsLabel); displayScorePointsLabel.x = centerX; displayScorePointsLabel.y = 140;
+	gameOverPopupGroup:insert(highscoreLabel); highscoreLabel.y = 165;
+	gameOverPopupGroup:insert(displayHighscorePointsLabel); displayHighscorePointsLabel.y = 190;
+	gameOverPopupGroup.y = -gameOverPopupGroup.contentHeight * 2;
 end
 
 --[[ animations & transitions ]]
@@ -230,6 +252,16 @@ function displayPlayerAndOpponent()
 	playerSprite:setSequence( "walk" ); playerSprite:play(); throwerSprite:setSequence( "walk" ); throwerSprite:play();
 	transition.to( playerSprite , { time = 500, y = playerSprite.y - 60 } );
 	transition.to( throwerSprite , { time = 500, y = initialBallPositionY, onComplete = playerOpponentGetStill } );
+end
+
+function presentAndPopulateGameOverPopup()
+	updateScores();
+	gameOverPopupGroup:toFront();
+	transition.to(gameOverPopupGroup, { y = centerY - 250, time = 400 });
+end
+
+function dismissGameOverPopup()
+	transition.to(gameOverPopupGroup, { y = gameOverPopupGroup.contentHeight * 2, time = 400, onComplete = function() gameOverPopupGroup.y = -gameOverPopupGroup.contentHeight * 2; end})
 end
 
 function oneTwoThreeGameStart()
@@ -301,38 +333,41 @@ end
 
 --[[ gameplay & game logic ]]
 function bat(event)
-	if event.phase == "began" or event.isShake then
-		audio.play(soundWoosh);
-		playerSprite:setSequence( "bat" );
-		timer.cancel(setupStillAnimationTimer);
-		setupStillAnimationTimer = timer.performWithDelay(300, function() playerSprite:setSequence("still"); playerSprite:play(); end); -- 250 = bat sequence duration
-		playerSprite:play();
-		for i = 0, totalBalls do
-			if balls[i].isVisible then
-				if balls[i].y >= successfulBatBallY then
-					if balls[i].y <= tooLateToBatBallPositionY then
-						audio.play(soundBatting);
-						balls[i]:successfulHit();
-						score = score + pointsAwardedPerBat;
-						scoreText.text = score;
-						battingStreak = battingStreak + 1;
-						if battingStreak % 3 == 0 then
-							if battingStreak % 6 == 0 then
-								-- 'extra point & extra life' animation
-								if missesUntilOut < 3 then
-									displayScoreAndLifeAdder();
-									restoreOneLife();
+	if not playerIsBatting then
+		if event.phase == "began" or event.isShake then
+			playerIsBatting = true;
+			audio.play(soundWoosh);
+			playerSprite:setSequence( "bat" );
+			timer.cancel(setupStillAnimationTimer);
+			setupStillAnimationTimer = timer.performWithDelay(300, function() playerIsBatting = false; playerSprite:setSequence("still"); playerSprite:play(); end); -- 250 = bat sequence duration
+			playerSprite:play();
+			for i = 0, totalBalls do
+				if balls[i].isVisible then
+					if balls[i].y >= successfulBatBallY then
+						if balls[i].y <= tooLateToBatBallPositionY then
+							audio.play(soundBatting);
+							balls[i]:successfulHit();
+							score = score + pointsAwardedPerBat;
+							scoreText.text = score;
+							battingStreak = battingStreak + 1;
+							if battingStreak % 3 == 0 then
+								if battingStreak % 6 == 0 then
+									-- 'extra point & extra life' animation
+									if missesUntilOut < 3 then
+										displayScoreAndLifeAdder();
+										restoreOneLife();
+									else
+										displayScoreAdder();
+									end
 								else
+									-- 'extra point' animation
 									displayScoreAdder();
 								end
-							else
-								-- 'extra point' animation
-								displayScoreAdder();
+								pointsAwardedPerBat = pointsAwardedPerBat + 1;
+								audio.play(soundStreakBoost);
 							end
-							pointsAwardedPerBat = pointsAwardedPerBat + 1;
-							audio.play(soundStreakBoost);
+							--return;
 						end
-						--return;
 					end
 				end
 			end
@@ -440,6 +475,20 @@ function displayScoreAndLifeAdder()
 	extraLifeText.y = centerY + 40; extraLifeText.alpha = 1;
 	transition.to(scoreAdderText, {y = centerY - 80, alpha = 0, time = 500 });
 	transition.to(extraLifeText, {y = centerY - 40, alpha = 0, time = 500 });
+end
+
+--[[ score-loading, social network, ads, etc ]]
+function loadHighscore()
+	-- later
+	highscore = 0;
+end
+
+function updateScores()
+	displayScorePointsLabel.text = score;
+	if score > highscore then
+		highscore = score;
+		displayHighscorePointsLabel.text = highscore;
+	end
 end
 
 createInitialScene();
