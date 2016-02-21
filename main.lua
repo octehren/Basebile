@@ -168,15 +168,15 @@ function goToGameScene() -- first load of game scene
 	gameSceneGroup:insert(groundForThrower); gameSceneGroup:insert(groundForPlayer);
 	groundForPlayer.x = centerX; groundForPlayer.y = 0;
 	startSceneGroup.anchorY = 0;
-	animateBall();
+	gameSceneGroup:toFront();
+	throwerSprite:toFront();
 	for i = 0, 4 do
 		balls[i] = instantiateBall(centerX, initialBallPositionY, centerY * 2, centerX * 2);
-		--gameSceneGroup:insert(balls[i]);
 		balls[i]:toFront();
 	end
-	gameSceneGroup:toFront();
 	totalBalls = #balls;
 	scoreText.isVisible = true; scoreText:toFront();
+	animateBall();
 	transition.to(groundForPlayer, { y = centerY * 2 - 36, time = transitionTimeInMiliseconds });
 	transition.to(groundForThrower, { y = initialBallPositionY, time = transitionTimeInMiliseconds });
 	transition.to(bg, { time = transitionTimeInMiliseconds, y = visibleDisplaySizeY, onComplete = function() displayPlayerAndOpponent(); createLivesGroup(); displayAndPositionScore(); end });
@@ -224,10 +224,10 @@ end
 
 --[[ animations & transitions ]]
 function animateBall() --ball animation for scene transition
+	animationBall:toFront();
 	audio.play(soundBallMedium);
 	animationBall.y = screenOffsetY; animationBall.xScale = ballContentScale; 
 	animationBall.yScale = ballContentScale; animationBall.x = centerX; animationBall.rotation = 0;
-	animationBall:toFront();
 	transition.to(animationBall, { time = transitionTimeInMiliseconds + 150, y = visibleDisplaySizeY + animationBall.contentHeight, rotation = 180 }); -- + 100 so ball can descend 'glued' to the bottom of game screen
 end
 
@@ -235,7 +235,7 @@ function displayPlayerAndOpponent()
 	playerSprite.anchorY = 1; playerSprite.y = visibleDisplaySizeY; playerSprite.x = centerX;
 	playerSprite:toFront();
 	throwerSprite.anchorY = 1; throwerSprite.y = -10; throwerSprite.x = centerX - (0.25 * throwerSprite.contentHeight / 4) -- 4 here = the number of sprites in throwerSprite
-	throwerSprite:toFront();
+	--throwerSprite:toFront(); thrower sprite is ':toFront()' in goToGameScene function, so Z index of thrower is smaller than the thrown ball's
 	--initialBallPositionY = throwerSprite.contentHeight + 20;
 	local function playerOpponentGetStill()
 		playerSprite.anchorX = 1; playerSprite.x = centerX;
@@ -245,8 +245,8 @@ function displayPlayerAndOpponent()
 		throwerSprite:play();
 		Runtime:addEventListener( "touch", bat );
 		Runtime:addEventListener( "accelerometer", bat ); -- bats on shaking phone
-		successfulBatBallY = playerSprite.y - (balls[0].contentHeight / 2) - playerSprite.contentHeight;
-		tooLateToBatBallPositionY = playerSprite.y - (playerSprite.contentHeight / 2);
+		successfulBatBallY = playerSprite.y - playerSprite.contentHeight - playerSprite.contentHeight / 3;
+		tooLateToBatBallPositionY = playerSprite.y - playerSprite.contentHeight + playerSprite.contentHeight / 5;
 		oneTwoThreeGameStart();
 	end
 	playerSprite:setSequence( "walk" ); playerSprite:play(); throwerSprite:setSequence( "walk" ); throwerSprite:play();
@@ -310,7 +310,7 @@ function throwBallAnimation()
 		throwerSprite:play();
 		throwingBallTimer = timer.performWithDelay(300, function()
 			local ballSpeed = math.random(ballMinThrowSpeed, ballMaxThrowSpeed);
-			balls[throwBallIndex]:toFront();
+			--balls[throwBallIndex]:toFront();
 			balls[throwBallIndex]:throw(ballSpeed);
 			if ballSpeed > 1300 then
 				audio.play(soundBallSlow);
@@ -320,9 +320,9 @@ function throwBallAnimation()
 				audio.play(soundBallFast);
 			end
 			throwBallIndex = (throwBallIndex + 1) % totalBalls;
-			if ballMaxThrowSpeed > 500 then
-				ballMaxThrowSpeed = ballMaxThrowSpeed - 4;
-				ballMinThrowSpeed = ballMinThrowSpeed - 1;
+			if ballMaxThrowSpeed > 800 then
+				ballMaxThrowSpeed = ballMaxThrowSpeed - 5;
+				ballMinThrowSpeed = ballMinThrowSpeed - 2;
 			end
 			throwerSprite:setSequence( "still" );
 			throwerSprite:play();
@@ -346,7 +346,7 @@ function bat(event)
 					if balls[i].y >= successfulBatBallY then
 						if balls[i].y <= tooLateToBatBallPositionY then
 							audio.play(soundBatting);
-							balls[i]:successfulHit();
+							timer.performWithDelay(30, function() balls[i]:successfulHit(); end);
 							score = score + pointsAwardedPerBat;
 							scoreText.text = score;
 							battingStreak = battingStreak + 1;
