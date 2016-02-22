@@ -21,24 +21,25 @@ local transitionTimeInMiliseconds = 500;
 --[[ images & image groups ]]
 local animationBall = display.newImage("bigBall.png"); animationBall.anchorX = 0.5;
 local groundForPlayer = display.newImage("groundForPlayer0.png"); groundForPlayer.rotation = 180; groundForPlayer.anchorY = 0;
-local groundForThrower = display.newImage("groundForThrower.png"); --groundForThrower.anchorY = 0;
+local groundForThrower = display.newImage("groundForThrower0.png"); --groundForThrower.anchorY = 0;
+local outLabel = display.newImage("outLabel.png");
 local startSceneGroup = display.newGroup();
 local gameSceneGroup = display.newGroup();
 local livesGroup = display.newGroup();
 local gameOverPopupGroup = display.newGroup();
 --[[ audio files ]]
 local soundIsOn = true;
-local audio1 = audio.loadSound("soundBatting.mp3");
+local audio1 = audio.loadSound("soundBatting.wav");
 local audio2 = audio.loadSound("soundGameOn.wav");
-local audio3 = audio.loadSound("soundCountdown.mp3");
+local audio3 = audio.loadSound("soundCountdown.wav");
 local audio4 = audio.loadSound("soundBallSlow.wav");
 local audio5 = audio.loadSound("soundBallMedium.wav");
 local audio6 = audio.loadSound("soundBallFast.wav");
 local audio7 = audio.loadSound("soundGameOver.wav");
-local audio8 = audio.loadSound("soundWoosh.mp3");
+local audio8 = audio.loadSound("soundWoosh.wav");
 local audio9 = audio.loadSound("soundStreakBoost.wav");
 local audio10 = audio.loadSound("soundMissedBall.wav");
-local audio11 = audio.loadSound("soundHitCrowdCheer.mp3");
+local audio11 = audio.loadSound("soundHitCrowdCheer.wav");
 local soundBatting = audio1;
 local soundGameOn = audio2;
 local soundCountdown = audio3;
@@ -141,8 +142,9 @@ local function createInitialScene()
 	billy.anchorX = 1; billy.anchorY = 1; billy.x = centerX * 5; -- places char far from screen center
 	billy.y = centerY * 2; -- places char at bottom of screen
 	playBtn.anchorX = 0; playBtn.anchorY = 1;
+	local logo = display.newImage("basebileLogo.png"); logo.anchorY = 0; logo.y = -500; logo.x = centerX;
 	-- adds above elements to startSceneGroup so they can be moved all at once
-	startSceneGroup:insert(bg); startSceneGroup:insert(billy); --startSceneGroup:insert(playBtn);
+	startSceneGroup:insert(bg); startSceneGroup:insert(billy); startSceneGroup:insert(logo); --startSceneGroup:insert(playBtn);
 	-- adds game background to future use game group;
 	local function displaySoundButton()
 		audio.play(soundHitCrowdCheer);
@@ -155,6 +157,7 @@ local function createInitialScene()
 	end
 	audio.play(soundWoosh);
 	createGameOverPopup();
+	transition.to(logo, {time = 500, y = 10 });
 	transition.to(billy, {time = 500, x = visibleDisplaySizeX + screenOffsetX, onComplete = displayPlayButton });
 end
 
@@ -162,7 +165,7 @@ function goToGameScene() -- first load of game scene
 	audio.stop();
 	playBtn:removeEventListener("tap", goToGameScene);
 	missesUntilOut = 3;
-	local bg = display.newImage("gameFieldBG.png");
+	local bg = display.newImage("gameFieldBG0.png");
 	bg.anchorY = 1; bg.anchorX = 0.5; bg.y = 0; bg.x = centerX;
 	groundForThrower.x = centerX; groundForThrower.y = centerY * -2;
 	gameSceneGroup:insert(groundForThrower); gameSceneGroup:insert(groundForPlayer);
@@ -215,10 +218,11 @@ end
 
 function createGameOverPopup()
 	gameOverPopupGroup:insert(highscoreContainer);
-	gameOverPopupGroup:insert(scoreLabel); scoreLabel.y = 115;
-	gameOverPopupGroup:insert(displayScorePointsLabel); displayScorePointsLabel.x = centerX; displayScorePointsLabel.y = 140;
-	gameOverPopupGroup:insert(highscoreLabel); highscoreLabel.y = 165;
-	gameOverPopupGroup:insert(displayHighscorePointsLabel); displayHighscorePointsLabel.y = 190;
+	gameOverPopupGroup:insert(scoreLabel); scoreLabel.y = 135;
+	gameOverPopupGroup:insert(displayScorePointsLabel); displayScorePointsLabel.x = centerX; displayScorePointsLabel.y = 160;
+	gameOverPopupGroup:insert(highscoreLabel); highscoreLabel.y = 185;
+	gameOverPopupGroup:insert(displayHighscorePointsLabel); displayHighscorePointsLabel.y = 210;
+	gameOverPopupGroup:insert(outLabel); outLabel.x = centerX; outLabel.y = 95;
 	gameOverPopupGroup.y = -gameOverPopupGroup.contentHeight * 2;
 end
 
