@@ -358,14 +358,17 @@ function bat(event)
 								if battingStreak % 6 == 0 then
 									-- 'extra point & extra life' animation
 									if missesUntilOut < 3 then
-										displayScoreAndLifeAdder();
-										restoreOneLife();
+										-- playerMissedBall() performed with delay of 50, life-displaying and score-adding functions are performed with delay of 45
+										timer.performWithDelay(45, function()
+											displayScoreAndLifeAdder();
+											restoreOneLife();
+										end);
 									else
-										displayScoreAdder();
+										timer.performWithDelay(45, displayScoreAdder);
 									end
 								else
 									-- 'extra point' animation
-									displayScoreAdder();
+									timer.performWithDelay(45, displayScoreAdder);
 								end
 								pointsAwardedPerBat = pointsAwardedPerBat + 1;
 								audio.play(soundStreakBoost);

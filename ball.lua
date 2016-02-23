@@ -19,7 +19,7 @@ function instantiateBall(centerX, positionY, finalPositionY, screenWidth)
 	end
 	ball.failedHit = function(self)
 		transition.cancel(self);
-		transition.to( self, { y = math.random(200, 320), time = math.random(100, 300), tag = "ballMovement", onComplete = function(ball) ball.isVisible = false; ball.xScale = 1; ball.yScale = 1; playerMissedBall(); end } );
+		transition.to( self, { y = math.random(200, 320), time = math.random(100, 300), tag = "ballMovement", onComplete = function(ball) ball.isVisible = false; ball.xScale = 1; ball.yScale = 1; timer.performWithDelay(50, playerMissedBall); end } ); -- playerMissedBall() performed with delay of 50, life-displaying and score-adding functions are performed with delay of 45
 	end
 
 	ball.isVisible = false;
