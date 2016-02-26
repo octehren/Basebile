@@ -4,7 +4,8 @@
 --
 -----------------------------------------------------------------------------------------
 
-display.setStatusBar(display.HiddenStatusBar)
+display.setStatusBar(display.HiddenStatusBar);
+
 --------------------------------------------------------------------------------------------
 -----------------------------[[ local scene variables ]]------------------------------------
 --------------------------------------------------------------------------------------------
@@ -93,7 +94,7 @@ local livesArray = {};
 local outsArray = {};
 local score = 0;
 local battingStreak = 0; -- replenishes life and adds 1 to score at every 5x batting streak
-local pointsAwardedPerBat = 1; -- + 1 at each 5x batting streak
+local pointsAwardedPerBat = 1; -- + 1 at each 3x batting streak
 local highscore = 0;
 --[[ high-score & game over screen ]]
 local highscoreContainer = display.newRoundedRect(centerX, centerY, 200, 300, 10);
@@ -116,6 +117,7 @@ local displayScoreAndLifeAdder;
 local presentAndPopulateGameOverPopup;
 local dismissGameOverPopup;
 local loadHighscore;
+local saveScore;
 local updateScores;
 --[[ font-handling ]]
 local scoreText = display.newText("0", centerX * 2 - 15, 5, "PixTall", 32); scoreText.isVisible = false;
@@ -135,6 +137,9 @@ local setupStillAnimationTimer = timer.performWithDelay(10, function() end); -- 
 
 --[[ scene creation ]]
 local function createInitialScene()
+	highscore = loadHighscore();
+	displayHighscorePointsLabel.text = highscore;
+	print(highscore);
 	local bg = display.newImage("mainScreenBG.png");
 	--bgToScreenRatioX = centerX * 2.3 / bg.contentWidth; bgToScreenRatioY = centerY * 2.4 / bg.contentHeight;
 	bg.x = centerX; bg.y = centerY;
@@ -355,6 +360,7 @@ function bat(event)
 							scoreText.text = score;
 							battingStreak = battingStreak + 1;
 							if battingStreak % 3 == 0 then
+								pointsAwardedPerBat = pointsAwardedPerBat + 1;
 								if battingStreak % 6 == 0 then
 									-- 'extra point & extra life' animation
 									if missesUntilOut < 3 then
@@ -370,7 +376,6 @@ function bat(event)
 									-- 'extra point' animation
 									timer.performWithDelay(45, displayScoreAdder);
 								end
-								pointsAwardedPerBat = pointsAwardedPerBat + 1;
 								audio.play(soundStreakBoost);
 							end
 							--return;
@@ -472,22 +477,52 @@ end
 
 function displayScoreAdder()
 	scoreAdderText.y = centerY; scoreAdderText.alpha = 1;
-	scoreAdderText.text = "x" .. pointsAwardedPerBat + 1;
+	scoreAdderText.text = "x" .. pointsAwardedPerBat;
 	transition.to(scoreAdderText, {y = centerY - 80, alpha = 0, time = 500 });
 end
 
 function displayScoreAndLifeAdder()
 	scoreAdderText.y = centerY; scoreAdderText.alpha = 1;
-	scoreAdderText.text = "x" .. pointsAwardedPerBat + 1;
+	scoreAdderText.text = "x" .. pointsAwardedPerBat;
 	extraLifeText.y = centerY + 40; extraLifeText.alpha = 1;
 	transition.to(scoreAdderText, {y = centerY - 80, alpha = 0, time = 500 });
 	transition.to(extraLifeText, {y = centerY - 40, alpha = 0, time = 500 });
 end
 
 --[[ score-loading, social network, ads, etc ]]
+
+function saveScore(value)
+	-- will save specified value to specified file
+    local theFile = "highscore.data";
+    local theValue = tostring(value);
+    local path = system.pathForFile( theFile, system.DocumentsDirectory );
+    -- io.open opens a file at path. returns nil if no file found
+    local file = io.open( path, "w+" );
+    if file then
+      -- write game score to the text file
+      file:write( theValue );
+      io.close( file );
+	end
+end
+
 function loadHighscore()
-	-- later
-	highscore = 0;
+	-- will load specified file, or create new file if it doesn't exist
+    local theFile = "highscore.data"
+    local path = system.pathForFile( theFile, system.DocumentsDirectory )
+    -- io.open opens a file at path. returns nil if no file found
+    local file = io.open( path, "r" )
+      if file then
+      -- read all contents of file into a string
+        local contents = file:read( "*a" )
+        io.close( file )
+        return tonumber(contents);
+      else
+        -- create file b/c it doesn't exist yet
+        file = io.open( path, "w" )
+        file:write( "0" )
+        io.close( file )
+        return 0;
+    end
 end
 
 function updateScores()
@@ -495,6 +530,7 @@ function updateScores()
 	if score > highscore then
 		highscore = score;
 		displayHighscorePointsLabel.text = highscore;
+		saveScore(highscore);
 	end
 end
 
