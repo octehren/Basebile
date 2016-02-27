@@ -27,6 +27,14 @@ settings =
 	--
 	iphone =
 	{
+		plugins =
+	    {
+	        ["CoronaProvider.gameNetwork.apple"] =
+	        {
+	            publisherId = "com.coronalabs",
+	            supportedPlatforms = { iphone=true }
+	        },
+	    },
 		plist =
 		{
 			UIStatusBarHidden = false,
@@ -73,9 +81,19 @@ settings =
 	--
 	android =
 	{
+	    googlePlayGamesAppId = "29844238489347",  --long App ID number (use yours!)
 		usesPermissions =
 		{
 			"android.permission.INTERNET",
+		},
+		plugins =
+		{
+		   --key is the name passed to the Lua "require()"
+		   ["CoronaProvider.gameNetwork.google"] =
+		   {
+		      --required!
+		      publisherId = "com.coronalabs",
+		   },
 		},
 	},
 }

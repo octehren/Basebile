@@ -74,6 +74,7 @@ local throwerImageDataThrowing = { name = "throw", sheet = throwerThrowingImageS
 local throwerSprite = display.newSprite(throwerImageSheet, { throwerImageDataWalk, throwerImageDataStill, throwerImageDataThrowing } );
 --[[ external files ]]
 local ball = require("ball"); -- enables 'instantiateBall()' and 'vanish(obj)' functions
+require("adsScoreAndGameNetwork") -- enables 'saveScore()', 'loadScore()'
 --[[ buttons ]]
 local playBtn = display.newImage("playBtn.png");
 --[[ balls array & ball-related variables ]]
