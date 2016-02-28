@@ -72,9 +72,6 @@ local throwerThrowingImageSheet = graphics.newImageSheet("throwerThrowingSprite0
 local throwerImageDataThrowing = { name = "throw", sheet = throwerThrowingImageSheet, start = 1, count = 3, time = 300 };
 --thrower sprite--
 local throwerSprite = display.newSprite(throwerImageSheet, { throwerImageDataWalk, throwerImageDataStill, throwerImageDataThrowing } );
---[[ external files ]]
-local ball = require("ball"); -- enables 'instantiateBall()' and 'vanish(obj)' functions
-require("adsScoreAndGameNetwork") -- enables 'saveScore()', 'loadScore()'
 --[[ buttons ]]
 local playBtn = display.newImage("playBtn.png");
 --[[ balls array & ball-related variables ]]
@@ -96,7 +93,10 @@ local outsArray = {};
 local score = 0;
 local battingStreak = 0; -- replenishes life and adds 1 to score at every 5x batting streak
 local pointsAwardedPerBat = 1; -- + 1 at each 3x batting streak
-local highscore = 0;
+highscore = 0; -- will be used in 'adsScoreAndGameNetwork.lua'
+--[[ external files ]]
+local ball = require("ball"); -- enables 'instantiateBall()' and 'vanish(obj)' functions
+require("adsScoreAndGameNetwork") -- enables 'saveScore()', 'loadScore()'
 --[[ high-score & game over screen ]]
 local highscoreContainer = display.newRoundedRect(centerX, centerY, 200, 300, 10);
 highscoreContainer.strokeWidth = 8; highscoreContainer:setStrokeColor(1, 0.95, 0.1); highscoreContainer:setFillColor(0.2, 0.4, 0.9);

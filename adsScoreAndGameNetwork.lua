@@ -5,6 +5,7 @@
 local gameNetwork = require( "gameNetwork" )
 local playerName;
 local isAndroidSystem = false;
+local ads = require("ads");
 local function loadLocalPlayerCallback( event )
    playerName = event.data.alias
    saveSettings()  --save player data locally using your own "saveSettings()" function
@@ -42,8 +43,7 @@ local function systemEvents( event )
    end
    return true
 end
- 
-Runtime:addEventListener( "system", systemEvents )
+
 ------------------------------------------------
 -----------[[ leaderboards n sheit ]]-----------
 ------------------------------------------------
@@ -65,7 +65,7 @@ end
 
 local function scorePost()
   --for GameCenter, default to the leaderboard name from iTunes Connect
-  local myCategory = "com.yourname.yourgame.highscores";
+  local myCategory = "otamm.corona.basebile.basebile";
    
   if ( system.getInfo( "platformName" ) == "Android" ) then
      --for GPGS, reset "myCategory" to the string provided from the leaderboard setup in Google
@@ -120,3 +120,49 @@ end
 ------------------------------------------------
 ---------------[[ ads n sheit ]]----------------
 ------------------------------------------------
+
+local function vungleListener( event )
+   -- Video ad not yet downloaded and available
+   if ( event.type == "adStart" and event.isError ) then
+      if ( isAndroidSystem ) then
+         ads:setCurrentProvider( "admob" )
+      else
+         ads:setCurrentProvider( "iAds" )
+      end
+      ads.show( "interstitial" )
+   elseif ( event.type == "adEnd" ) then
+      -- Ad was successfully shown and ended; hide the overlay so the app can resume.
+      storyboard.hideOverlay()
+ 
+   else
+      print( "Received event", event.type )
+   end
+   return true
+end
+ 
+local function iAdsListener( event )
+   if ( event.isError ) then
+      storyboard.showOverlay( "selfpromo" )
+   end
+   return true
+end
+ 
+local function adMobListener( event )
+   if ( event.isError ) then
+      storyboard.showOverlay( "selfpromo" )
+   end
+   return true
+end
+
+------------------------------------------------
+-----------[[ initializing stuff ]]-------------
+------------------------------------------------
+
+Runtime:addEventListener( "system", systemEvents );
+
+if ( isAndroidSystem ) then
+   ads.init( "admob", "your-ad-unit-id-here", adMobListener );
+else
+   ads.init( "iads", "otamm.corona.basebile", iAdsListener );
+end
+ads.init( "vungle", "yourAppID", vungleListener );
