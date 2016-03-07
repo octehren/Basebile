@@ -40,7 +40,7 @@ local audio7 = audio.loadSound("soundGameOver.wav");
 local audio8 = audio.loadSound("soundWoosh.wav");
 local audio9 = audio.loadSound("soundStreakBoost.wav");
 local audio10 = audio.loadSound("soundMissedBall.wav");
-local audio11 = audio.loadSound("soundHitCrowdCheer.wav");
+--local audio11 = audio.loadSound("soundHit.wav");
 local soundBatting = audio1;
 local soundGameOn = audio2;
 local soundCountdown = audio3;
@@ -51,7 +51,7 @@ local soundGameOver = audio7;
 local soundWoosh = audio8;
 local soundStreakBoost = audio9;
 local soundMissedBall = audio10;
-local soundHitCrowdCheer = audio11;
+--local soundHitCrowdCheer = audio11;
 --[[ sprites & sprite data ]]
 --billy--
 local playerImageSheet = graphics.newImageSheet("billySprite0.png", { width = 30, height = 62, numFrames = 4, sheetContentWidth = 121, sheetContentHeight = 62 } );
@@ -74,6 +74,10 @@ local throwerImageDataThrowing = { name = "throw", sheet = throwerThrowingImageS
 local throwerSprite = display.newSprite(throwerImageSheet, { throwerImageDataWalk, throwerImageDataStill, throwerImageDataThrowing } );
 --[[ buttons ]]
 local playBtn = display.newImage("playBtn.png");
+local soundBtn1 = display.newImage("soundOn.png");
+local soundBtn2 = display.newImage("soundOff.png");
+local pauseBtn1 = display.newImage("pauseOff.png");
+local pauseBtn2 = display.newImage("pauseOn.png");
 --[[ balls array & ball-related variables ]]
 local balls = {};
 local totalBalls = 0;
@@ -142,34 +146,40 @@ local function createInitialScene()
 	displayHighscorePointsLabel.text = highscore;
 	print(highscore);
 	local bg = display.newImage("mainScreenBG.png");
-	--bgToScreenRatioX = centerX * 2.3 / bg.contentWidth; bgToScreenRatioY = centerY * 2.4 / bg.contentHeight;
 	bg.x = centerX; bg.y = centerY;
 	local billy = display.newImage("charScreenBG.png");
 	billy.anchorX = 1; billy.anchorY = 1; billy.x = centerX * 5; -- places char far from screen center
 	billy.y = centerY * 2; -- places char at bottom of screen
 	playBtn.anchorX = 0; playBtn.anchorY = 1;
+	soundBtn1.anchorX = 1; soundBtn1.anchorY = 1; soundBtn2.anchorX = 1; soundBtn2.anchorY = 1;
 	local logo = display.newImage("basebileLogo.png"); logo.anchorY = 0; logo.y = -500; logo.x = centerX;
 	-- adds above elements to startSceneGroup so they can be moved all at once
-	startSceneGroup:insert(bg); startSceneGroup:insert(billy); startSceneGroup:insert(logo); --startSceneGroup:insert(playBtn);
+	startSceneGroup:insert(bg); startSceneGroup:insert(billy); startSceneGroup:insert(logo);
 	-- adds game background to future use game group;
-	local function displaySoundButton()
-		audio.play(soundHitCrowdCheer);
+	local function enableButtons()
+		soundBtn2.x = soundBtn1.x; soundBtn2.y = soundBtn1.y;
+		soundBtn2.isVisible = false;
 		playBtn:addEventListener("tap", goToGameScene);
+		soundBtn1:addEventListener("tap", turnSoundOnOrOff);
+		soundBtn2:addEventListener("tap", turnSoundOnOrOff);
 	end
-	local function displayPlayButton() -- executed at the end of billy transition
+	local function displayPlayAndSoundButtons() -- executed at the end of billy transition
 		audio.play(soundWoosh);
 		playBtn.x = centerX * 7; playBtn.y = centerY * 7; playBtn.xScale = 5; playBtn.yScale = 5;
-		transition.to(playBtn, {time = 500, x = centerX * 2 - visibleDisplaySizeX - 10, y = visibleDisplaySizeY - 20, xScale = 1, yScale = 1, onComplete = displaySoundButton });
+		soundBtn1.x = centerX * 7; soundBtn1.y = centerY * 7; soundBtn1.xScale = 5; soundBtn1.yScale = 5;
+		transition.to(playBtn, {time = 500, x = centerX * 2 - visibleDisplaySizeX - 5, y = visibleDisplaySizeY - 5, xScale = 1, yScale = 1 });
+		transition.to(soundBtn1, {time = 500, x = visibleDisplaySizeX + 5, y = visibleDisplaySizeY - 5, xScale = 1, yScale = 1, onComplete = enableButtons });
 	end
 	audio.play(soundWoosh);
 	createGameOverPopup();
 	transition.to(logo, {time = 500, y = 10 });
-	transition.to(billy, {time = 500, x = visibleDisplaySizeX + screenOffsetX, onComplete = displayPlayButton });
+	transition.to(billy, {time = 500, x = visibleDisplaySizeX + screenOffsetX, onComplete = displayPlayAndSoundButtons });
 end
 
 function goToGameScene() -- first load of game scene
 	audio.stop();
 	playBtn:removeEventListener("tap", goToGameScene);
+	soundBtn1:removeEventListener("tap",turnSoundOnOrOff); soundBtn2:removeEventListener("tap",turnSoundOnOrOff);
 	missesUntilOut = 3;
 	local bg = display.newImage("gameFieldBG0.png");
 	bg.anchorY = 1; bg.anchorX = 0.5; bg.y = 0; bg.x = centerX;
@@ -192,9 +202,9 @@ function goToGameScene() -- first load of game scene
 end
 
 function recreateGameScene() -- second+ presentation of game scene
-	playBtn:removeEventListener("tap", recreateGameScene);
+	playBtn:removeEventListener("tap", recreateGameScene); soundBtn1:removeEventListener("tap",turnSoundOnOrOff); soundBtn2:removeEventListener("tap",turnSoundOnOrOff);
 	playerSprite.y = visibleDisplaySizeY + 100; throwerSprite.y = -10;
-	playBtn:toBack();
+	playBtn:toBack(); soundBtn1:toBack(); soundBtn2:toBack();
 	missesUntilOut = 3;
 	score = 0;
 	ballMaxThrowSpeed = 2400;
@@ -214,8 +224,6 @@ function displayGameOver()
 	for i = 0, totalBalls do
 		balls[i].isVisible = false; balls[i].xScale = 1; balls[i].yScale = 1;
 	end
-	playBtn:addEventListener("tap", recreateGameScene);
-	playBtn:toFront();
 	Runtime:removeEventListener("touch", bat);
 	Runtime:removeEventListener("accelerometer", bat);
 	audio.play(soundGameOver);
@@ -267,7 +275,20 @@ end
 function presentAndPopulateGameOverPopup()
 	updateScores();
 	gameOverPopupGroup:toFront();
-	transition.to(gameOverPopupGroup, { y = centerY - 250, time = 400 });
+	transition.to(gameOverPopupGroup, { y = centerY - 250, time = 400, onComplete = function() 
+		playBtn:addEventListener("tap", recreateGameScene); 
+		soundBtn1:addEventListener("tap",turnSoundOnOrOff);
+		soundBtn2:addEventListener("tap",turnSoundOnOrOff);
+		playBtn:toFront();
+		soundBtn1:toFront(); 
+		soundBtn2:toFront();
+		if soundIsOn then
+			soundBtn2.isVisible = false;
+		else
+			soundBtn1.isVisible = false;
+		end
+		showInterstitialAd(); 
+	end } );
 end
 
 function dismissGameOverPopup()
@@ -309,7 +330,6 @@ function oneTwoThreeGameStart()
 		oneImg.xScale = 0.5; oneImg.yScale = 0.5; oneImg.rotation = 270; oneImg.isVisible = true;
 		transition.to( oneImg, { rotation = 0, xScale = 1, yScale = 1, alpha = 0, time = 350, onComplete = two } );
 	end
-	--throwBallAnimation();
 	one();
 end
 
@@ -439,6 +459,8 @@ end
 --[[ sound-handling function ]]
 function turnSoundOnOrOff()
 	if soundIsOn then
+		soundBtn1.isVisible = false;
+		soundBtn2.isVisible = true;
 		soundIsOn = false;
 		soundBatting = nil;
 		soundGameOn = nil;
@@ -450,7 +472,10 @@ function turnSoundOnOrOff()
 		soundWoosh = nil;
 		soundStreakBoost = nil;
 		soundMissedBall = nil;
+		print("A")
 	else
+		soundBtn1.isVisible = true;
+		soundBtn2.isVisible = false;
 		soundIsOn = true;
 		soundBatting = audio1;
 		soundGameOn = audio2;
@@ -462,6 +487,7 @@ function turnSoundOnOrOff()
 		soundWoosh = audio8;
 		soundStreakBoost = audio9;
 		soundMissedBall = audio10;
+		print("B")
 	end
 end
 

@@ -26,11 +26,12 @@ settings =
 			["CoronaProvider.ads.vungle"] =
 			{
 			      publisherId = "com.vungle",
+			      supportedPlatforms = { iphone = true, android = true, ["iphone-sim"]=true },
 			},
 			["CoronaProvider.ads.iads"] =
 			{
 			      publisherId = "com.coronalabs",
-			      supportedPlatforms = { iphone = true },
+			      supportedPlatforms = { iphone = true, ["iphone-sim"]=true },
 			},
 		    ["CoronaProvider.ads.admob"] =
 			{
@@ -46,8 +47,8 @@ settings =
 		    },
 		    ["CoronaProvider.gameNetwork.apple"] =
 	        {
-	            publisherId = "otamm.corona.basebile",
-	            supportedPlatforms = { iphone=true }
+	            publisherId = "com.coronalabs",
+	            supportedPlatforms = { iphone=true, ["iphone-sim"]=true }
 	        },
 	    },
 	--

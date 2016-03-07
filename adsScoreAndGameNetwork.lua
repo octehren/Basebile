@@ -6,9 +6,10 @@ local gameNetwork = require( "gameNetwork" )
 local playerName;
 local isAndroidSystem = false;
 local ads = require("ads");
+local vungleId = "56d28e9e521c9a040300000b";
 local function loadLocalPlayerCallback( event )
    playerName = event.data.alias
-   saveSettings()  --save player data locally using your own "saveSettings()" function
+   --saveSettings()  --save player data locally using your own "saveSettings()" function
 end
  
 local function gameNetworkLoginCallback( event )
@@ -23,7 +24,7 @@ end
 local function gameNetworkSetup()
    if ( system.getInfo("platformName") == "Android" ) then
       isAndroidSystem = true;
-      gameNetwork.init( "google", gpgsInitCallback );
+      --gameNetwork.init( "google", gpgsInitCallback );
    else
       gameNetwork.init( "gamecenter", gameNetworkLoginCallback )
    end
@@ -125,11 +126,11 @@ local function vungleListener( event )
    -- Video ad not yet downloaded and available
    if ( event.type == "adStart" and event.isError ) then
       if ( isAndroidSystem ) then
-         ads:setCurrentProvider( "admob" )
+         --ads:setCurrentProvider( "admob" )
       else
          ads:setCurrentProvider( "iAds" )
       end
-      ads.show( "interstitial" )
+      ads.show( "interstitial")
    elseif ( event.type == "adEnd" ) then
       -- Ad was successfully shown and ended; hide the overlay so the app can resume.
       storyboard.hideOverlay()
@@ -144,6 +145,7 @@ local function iAdsListener( event )
    if ( event.isError ) then
       storyboard.showOverlay( "selfpromo" )
    end
+   ads:setCurrentProvider("vungle")
    return true
 end
  
@@ -161,8 +163,14 @@ end
 Runtime:addEventListener( "system", systemEvents );
 
 if ( isAndroidSystem ) then
-   ads.init( "admob", "your-ad-unit-id-here", adMobListener );
+   --ads.init( "admob", "your-ad-unit-id-here", adMobListener );
+   vungleId = "56d2923abc1a2d860300007e"
 else
    ads.init( "iads", "otamm.corona.basebile", iAdsListener );
 end
-ads.init( "vungle", "yourAppID", vungleListener );
+ads.init( "vungle", vungleId, vungleListener );
+
+function showInterstitialAd()
+  print("AAAA");
+  ads:show("interstitial")
+end
