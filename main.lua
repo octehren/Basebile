@@ -183,8 +183,7 @@ end
 
 function goToGameScene() -- first load of game scene
 	audio.stop();
-	--playBtn:removeEventListener("tap", goToGameScene);
-	--soundBtn1:removeEventListener("tap",turnSoundOnOrOff); soundBtn2:removeEventListener("tap",turnSoundOnOrOff);
+	playBtn:removeEventListener("tap", goToGameScene);
 	playBtn.isVisible = false; soundBtn1.isVisible = false; soundBtn2.isVisible = false;
 	missesUntilOut = 3;
 	local bg = display.newImage("gameFieldBG0.png");
@@ -204,22 +203,21 @@ function goToGameScene() -- first load of game scene
 	animateBall();
 	transition.to(groundForPlayer, { y = centerY * 2 - 36, time = transitionTimeInMiliseconds });
 	transition.to(groundForThrower, { y = initialBallPositionY, time = transitionTimeInMiliseconds });
-	transition.to(bg, { time = transitionTimeInMiliseconds, y = visibleDisplaySizeY, onComplete = function()displayPlayerAndOpponent();
+	transition.to(bg, { time = transitionTimeInMiliseconds, y = visibleDisplaySizeY, onComplete = function()
+		playBtn:addEventListener("tap", recreateGameScene);
+		displayPlayerAndOpponent();
 		createLivesGroup();
 		createPauseButtons();
 		displayAndPositionScore();
 		playBtn:toFront(); soundBtn2:toFront(); soundBtn1:toFront();
-		--playBtn.isVisible = false; soundBtn1.isVisible = false; soundBtn2.isVisible = false;
+		display.remove(startSceneGroup);
 	end 
 	});
 end
 
 function recreateGameScene() -- second+ presentation of game scene
-	--playBtn:removeEventListener("tap", recreateGameScene); soundBtn1:removeEventListener("tap",turnSoundOnOrOff); soundBtn2:removeEventListener("tap",turnSoundOnOrOff);
 	playerSprite.y = visibleDisplaySizeY + 100; throwerSprite.y = -10;
-	--playBtn:toBack(); soundBtn1:toBack(); soundBtn2:toBack();
 	playBtn.isVisible = false; soundBtn1.isVisible = false; soundBtn2.isVisible = false; pauseBtn1.isVisible = false; pauseBtn2.isVisible = false;
-	--pauseBtn2:toFront(); pauseBtn1:toFront(); pauseBtn2.isVisible = false;
 	missesUntilOut = 3;
 	pausesLeft = 3;
 	score = 0;
@@ -294,20 +292,15 @@ function presentAndPopulateGameOverPopup()
 	updateScores();
 	gameOverPopupGroup:toFront();
 	transition.to(gameOverPopupGroup, { y = centerY - 250, time = 400, onComplete = function() 
-		--playBtn:addEventListener("tap", recreateGameScene); 
-		--soundBtn1:addEventListener("tap",turnSoundOnOrOff);
-		--soundBtn2:addEventListener("tap",turnSoundOnOrOff);
-		--playBtn:toFront();
-		--soundBtn1:toFront(); 
-		--soundBtn2:toFront();
 		playBtn.isVisible = true;
 		if soundIsOn then
 			soundBtn1.isVisible = true;
 		else
 			soundBtn2.isVisible = true;
 		end
-		showInterstitialAd(); 
-	end } );
+		--showInterstitialAd(); 
+	  end 
+	} );
 end
 
 function dismissGameOverPopup()
@@ -316,6 +309,7 @@ end
 
 function oneTwoThreeGameStart()
 	pauseLabel.isVisible = false;
+	pauseBtn2.isVisible = false;
 	local oneImg = display.newImage("one.png"); oneImg.x = centerX; oneImg.y = centerY; oneImg.isVisible = false;
 	local twoImg = display.newImage("two.png"); twoImg.x = centerX; twoImg.y = centerY; twoImg.isVisible = false;
 	local threeImg = display.newImage("three.png"); threeImg.x = centerX; threeImg.y = centerY; threeImg.isVisible = false;
@@ -368,7 +362,6 @@ function throwBallAnimation()
 		throwerSprite:play();
 		throwingBallTimer = timer.performWithDelay(300, function()
 			local ballSpeed = math.random(ballMinThrowSpeed, ballMaxThrowSpeed);
-			--balls[throwBallIndex]:toFront();
 			balls[throwBallIndex]:throw(ballSpeed);
 			if ballSpeed > 1300 then
 				audio.play(soundBallSlow);
@@ -621,15 +614,11 @@ function resumeGame()
   if pausesLeft > 0 then
     pauseBtn1.isVisible = true;
   end
-  pauseBtn2.isVisible = false;
+  --pauseBtn2.isVisible = false; pauseBtn2 being made invisible in oneTwoThreeGameStart
   gamePaused = false;
-  -- 250 as timer delay is the duration of the last animation in oneTwoThreeGameStart.
- -- timer.performWithDelay(250, function()
-	  timer.resume(throwBallAnimationTimer);
-	  timer.resume(throwingBallTimer);
-  	  transition.resume("ballMovement");
-  --	end
-  --);
+  timer.resume(throwBallAnimationTimer);
+  timer.resume(throwingBallTimer);
+  transition.resume("ballMovement");
 end
 
 createInitialScene();
