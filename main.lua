@@ -19,6 +19,8 @@ local visibleDisplaySizeY = display.viewableContentHeight;
 local screenOffsetX = centerX * 2 - visibleDisplaySizeX;
 local screenOffsetY = centerY * 2 - visibleDisplaySizeY;
 local transitionTimeInMiliseconds = 500;
+local gamePaused = false;
+local pausesLeft = 3;
 --[[ images & image groups ]]
 local animationBall = display.newImage("bigBall.png"); animationBall.anchorX = 0.5;
 local groundForPlayer = display.newImage("groundForPlayer0.png"); groundForPlayer.rotation = 180; groundForPlayer.anchorY = 0;
@@ -83,7 +85,7 @@ local balls = {};
 local totalBalls = 0;
 local ballToBeBattedIndex = 0;
 local throwBallIndex = 0;
-local initialBallPositionY = throwerSprite.contentHeight + 30;
+local initialBallPositionY = throwerSprite.contentHeight + 50;
 local tooLateToBatBallPositionY = 300; -- ball cannot be hit anymore, misses
 local successfulBatBallY = 250; -- homerun hit
 local tooSoonToBatBallPositionY = 200; -- was hit too soon, misses
@@ -124,6 +126,9 @@ local dismissGameOverPopup;
 local loadHighscore;
 local saveScore;
 local updateScores;
+local resumeGame;
+local pauseGame;
+local createPauseButtons;
 --[[ font-handling ]]
 local scoreText = display.newText("0", centerX * 2 - 15, 5, "PixTall", 32); scoreText.isVisible = false;
 local scoreAdderText = display.newText("x2", centerX, -centerY, "PixTall", 40);
@@ -132,6 +137,7 @@ local scoreLabel = display.newText("SCORE:", centerX, -50, "PixTall", 32);
 local highscoreLabel = display.newText("HIGH SCORE:", centerX, 5, "PixTall", 32);
 local displayScorePointsLabel = display.newText("0", centerX, -100, "PixTall", 32);
 local displayHighscorePointsLabel = display.newText("0", centerX, -50, "PixTall", 32);
+local pauseLabel = display.newText("PAUSE 1", centerX, centerY, "PixTall", 50); pauseLabel.isVisible = false;
 --[[ timers ]]
 local throwBallAnimationTimer; -- the animation to throw the ball
 local throwingBallTimer; -- actual throw of ball
@@ -144,7 +150,6 @@ local setupStillAnimationTimer = timer.performWithDelay(10, function() end); -- 
 local function createInitialScene()
 	highscore = loadHighscore();
 	displayHighscorePointsLabel.text = highscore;
-	print(highscore);
 	local bg = display.newImage("mainScreenBG.png");
 	bg.x = centerX; bg.y = centerY;
 	local billy = display.newImage("charScreenBG.png");
@@ -178,8 +183,9 @@ end
 
 function goToGameScene() -- first load of game scene
 	audio.stop();
-	playBtn:removeEventListener("tap", goToGameScene);
-	soundBtn1:removeEventListener("tap",turnSoundOnOrOff); soundBtn2:removeEventListener("tap",turnSoundOnOrOff);
+	--playBtn:removeEventListener("tap", goToGameScene);
+	--soundBtn1:removeEventListener("tap",turnSoundOnOrOff); soundBtn2:removeEventListener("tap",turnSoundOnOrOff);
+	playBtn.isVisible = false; soundBtn1.isVisible = false; soundBtn2.isVisible = false;
 	missesUntilOut = 3;
 	local bg = display.newImage("gameFieldBG0.png");
 	bg.anchorY = 1; bg.anchorX = 0.5; bg.y = 0; bg.x = centerX;
@@ -198,14 +204,24 @@ function goToGameScene() -- first load of game scene
 	animateBall();
 	transition.to(groundForPlayer, { y = centerY * 2 - 36, time = transitionTimeInMiliseconds });
 	transition.to(groundForThrower, { y = initialBallPositionY, time = transitionTimeInMiliseconds });
-	transition.to(bg, { time = transitionTimeInMiliseconds, y = visibleDisplaySizeY, onComplete = function() displayPlayerAndOpponent(); createLivesGroup(); displayAndPositionScore(); end });
+	transition.to(bg, { time = transitionTimeInMiliseconds, y = visibleDisplaySizeY, onComplete = function()displayPlayerAndOpponent();
+		createLivesGroup();
+		createPauseButtons();
+		displayAndPositionScore();
+		playBtn:toFront(); soundBtn2:toFront(); soundBtn1:toFront();
+		--playBtn.isVisible = false; soundBtn1.isVisible = false; soundBtn2.isVisible = false;
+	end 
+	});
 end
 
 function recreateGameScene() -- second+ presentation of game scene
-	playBtn:removeEventListener("tap", recreateGameScene); soundBtn1:removeEventListener("tap",turnSoundOnOrOff); soundBtn2:removeEventListener("tap",turnSoundOnOrOff);
+	--playBtn:removeEventListener("tap", recreateGameScene); soundBtn1:removeEventListener("tap",turnSoundOnOrOff); soundBtn2:removeEventListener("tap",turnSoundOnOrOff);
 	playerSprite.y = visibleDisplaySizeY + 100; throwerSprite.y = -10;
-	playBtn:toBack(); soundBtn1:toBack(); soundBtn2:toBack();
+	--playBtn:toBack(); soundBtn1:toBack(); soundBtn2:toBack();
+	playBtn.isVisible = false; soundBtn1.isVisible = false; soundBtn2.isVisible = false; pauseBtn1.isVisible = false; pauseBtn2.isVisible = false;
+	--pauseBtn2:toFront(); pauseBtn1:toFront(); pauseBtn2.isVisible = false;
 	missesUntilOut = 3;
+	pausesLeft = 3;
 	score = 0;
 	ballMaxThrowSpeed = 2400;
 	ballMinThrowSpeed = 900;
@@ -226,6 +242,8 @@ function displayGameOver()
 	end
 	Runtime:removeEventListener("touch", bat);
 	Runtime:removeEventListener("accelerometer", bat);
+	pauseBtn1.isVisible = false;
+	pauseBtn2.isVisible = false;
 	audio.play(soundGameOver);
 	presentAndPopulateGameOverPopup();
 end
@@ -255,7 +273,7 @@ function displayPlayerAndOpponent()
 	throwerSprite.anchorY = 1; throwerSprite.y = -10; throwerSprite.x = centerX - (0.25 * throwerSprite.contentHeight / 4) -- 4 here = the number of sprites in throwerSprite
 	--throwerSprite:toFront(); thrower sprite is ':toFront()' in goToGameScene function, so Z index of thrower is smaller than the thrown ball's
 	--initialBallPositionY = throwerSprite.contentHeight + 20;
-	local function playerOpponentGetStill()
+	local function playerOpponentGetStill() -- also displays pause buttons
 		playerSprite.anchorX = 1; playerSprite.x = centerX;
 		playerSprite:setSequence( "still" );
 		playerSprite:play();
@@ -276,16 +294,17 @@ function presentAndPopulateGameOverPopup()
 	updateScores();
 	gameOverPopupGroup:toFront();
 	transition.to(gameOverPopupGroup, { y = centerY - 250, time = 400, onComplete = function() 
-		playBtn:addEventListener("tap", recreateGameScene); 
-		soundBtn1:addEventListener("tap",turnSoundOnOrOff);
-		soundBtn2:addEventListener("tap",turnSoundOnOrOff);
-		playBtn:toFront();
-		soundBtn1:toFront(); 
-		soundBtn2:toFront();
+		--playBtn:addEventListener("tap", recreateGameScene); 
+		--soundBtn1:addEventListener("tap",turnSoundOnOrOff);
+		--soundBtn2:addEventListener("tap",turnSoundOnOrOff);
+		--playBtn:toFront();
+		--soundBtn1:toFront(); 
+		--soundBtn2:toFront();
+		playBtn.isVisible = true;
 		if soundIsOn then
-			soundBtn2.isVisible = false;
+			soundBtn1.isVisible = true;
 		else
-			soundBtn1.isVisible = false;
+			soundBtn2.isVisible = true;
 		end
 		showInterstitialAd(); 
 	end } );
@@ -296,6 +315,7 @@ function dismissGameOverPopup()
 end
 
 function oneTwoThreeGameStart()
+	pauseLabel.isVisible = false;
 	local oneImg = display.newImage("one.png"); oneImg.x = centerX; oneImg.y = centerY; oneImg.isVisible = false;
 	local twoImg = display.newImage("two.png"); twoImg.x = centerX; twoImg.y = centerY; twoImg.isVisible = false;
 	local threeImg = display.newImage("three.png"); threeImg.x = centerX; threeImg.y = centerY; threeImg.isVisible = false;
@@ -305,7 +325,15 @@ function oneTwoThreeGameStart()
 		audio.play(soundGameOn);
 		infoBox.isVisible = true;
 		local function shakeInfoBox4()
-			transition.to( infoBox, { rotation = -20, xScale = 1.3, yScale = 1.3, alpha = 0, time = 250, onComplete = throwBallAnimation } );
+			transition.to( infoBox, { rotation = -20, xScale = 1.3, yScale = 1.3, alpha = 0, time = 250, onComplete = function()
+				  if gamePaused then
+				  	resumeGame();
+				  else
+				  	pauseBtn1.isVisible = true;
+				    throwBallAnimation();
+				  end
+			    end
+			} );
 		end
 		local function shakeInfoBox3()
 			transition.to( infoBox, { rotation = 20, xScale = 1.3, yScale = 1.3, time = 250, onComplete = shakeInfoBox4 } );
@@ -363,7 +391,7 @@ end
 
 --[[ gameplay & game logic ]]
 function bat(event)
-	if not playerIsBatting then
+	if not (playerIsBatting or gamePaused) then
 		if event.phase == "began" or event.isShake then
 			playerIsBatting = true;
 			audio.play(soundWoosh);
@@ -472,7 +500,6 @@ function turnSoundOnOrOff()
 		soundWoosh = nil;
 		soundStreakBoost = nil;
 		soundMissedBall = nil;
-		print("A")
 	else
 		soundBtn1.isVisible = true;
 		soundBtn2.isVisible = false;
@@ -487,7 +514,6 @@ function turnSoundOnOrOff()
 		soundWoosh = audio8;
 		soundStreakBoost = audio9;
 		soundMissedBall = audio10;
-		print("B")
 	end
 end
 
@@ -559,6 +585,51 @@ function updateScores()
 		displayHighscorePointsLabel.text = highscore;
 		saveScore(highscore);
 	end
+end
+-- [[ pause stuff functions ]]
+function createPauseButtons()
+  pauseBtn1.x = centerX; pauseBtn1.y = 20; pauseBtn1:toFront();
+  pauseBtn2.x = centerX; pauseBtn2.y = 20; pauseBtn2:toFront(); 
+  pauseBtn1:addEventListener("tap", pauseGame);
+  pauseBtn2:addEventListener("tap", oneTwoThreeGameStart);
+  pauseBtn1.isVisible = false;
+  pauseBtn2.isVisible = false;
+  pauseLabel:toFront();
+end
+
+function pauseGame()
+	if pausesLeft >= 0 then
+	  pausesLeft = pausesLeft - 1;
+	  if pausesLeft == 0 then
+	  	pauseLabel.text = "LAST PAUSE";
+	  else
+	  	pauseLabel.text = "PAUSE " .. 3 - pausesLeft;
+	  end
+	  pauseLabel.isVisible = false;
+	  pauseBtn1.isVisible = false;
+	  pauseBtn2.isVisible = true;
+	  pauseLabel.isVisible = true;
+	  gamePaused = true;
+	  timer.pause(throwBallAnimationTimer);
+	  timer.pause(throwingBallTimer);
+	  transition.pause("ballMovement");
+	  throwerSprite:setSequence("still"); throwerSprite:play();
+	end
+end
+
+function resumeGame()
+  if pausesLeft > 0 then
+    pauseBtn1.isVisible = true;
+  end
+  pauseBtn2.isVisible = false;
+  gamePaused = false;
+  -- 250 as timer delay is the duration of the last animation in oneTwoThreeGameStart.
+ -- timer.performWithDelay(250, function()
+	  timer.resume(throwBallAnimationTimer);
+	  timer.resume(throwingBallTimer);
+  	  transition.resume("ballMovement");
+  --	end
+  --);
 end
 
 createInitialScene();
