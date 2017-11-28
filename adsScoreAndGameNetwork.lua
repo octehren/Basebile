@@ -2,36 +2,35 @@
 ------------------------------------------------
 --------------[[ game networks ]]---------------
 ------------------------------------------------
-local gameNetwork = require( "gameNetwork" )
-local playerName;
-local isAndroidSystem = false;
-local ads = require("ads");
-local vungleId = "56d28e9e521c9a040300000b";
-local function loadLocalPlayerCallback( event )
+gameNetwork = require( "gameNetwork" )
+playerName = "";
+isAndroidSystem = system.getInfo("platformName") == "Android";
+ads = require("ads");
+;
+function loadLocalPlayerCallback( event )
    playerName = event.data.alias
    --saveSettings()  --save player data locally using your own "saveSettings()" function
 end
  
-local function gameNetworkLoginCallback( event )
+function gameNetworkLoginCallback( event )
    gameNetwork.request( "loadLocalPlayer", { listener=loadLocalPlayerCallback } )
    return true
 end
  
-local function gpgsInitCallback( event )
+function gpgsInitCallback( event )
    gameNetwork.request( "login", { userInitiated=true, listener=gameNetworkLoginCallback } )
 end
  
-local function gameNetworkSetup()
-   if ( system.getInfo("platformName") == "Android" ) then
-      isAndroidSystem = true;
-      --gameNetwork.init( "google", gpgsInitCallback );
+function gameNetworkSetup()
+   if ( isAndroidSystem ) then
+      gameNetwork.init( "google", gpgsInitCallback );
    else
       gameNetwork.init( "gamecenter", gameNetworkLoginCallback )
    end
 end
  
 ------HANDLE SYSTEM EVENTS------
-local function systemEvents( event )
+function systemEvents( event )
    print("systemEvent " .. event.type)
    if ( event.type == "applicationSuspend" ) then
       print( "suspending..........................." )
@@ -48,11 +47,11 @@ end
 ------------------------------------------------
 -----------[[ leaderboards n sheit ]]-----------
 ------------------------------------------------
-local function showLeaderboards()
+function showLeaderboards()
    if (isAndroidSystem) then
       gameNetwork.show( "leaderboards" )
    else
-      gameNetwork.show( "leaderboards", { leaderboard = {timeScope="AllTime"} } )
+      gameNetwork.show( "leaderboards", { leaderboard = { timeScope="AllTime" } } )
    end
    return true
 end
@@ -64,20 +63,25 @@ function postScoreSubmit( event )
    return true;
 end
 
-local function scorePost()
+function scorePost()
   --for GameCenter, default to the leaderboard name from iTunes Connect
-  local myCategory = "otamm.corona.basebile.basebile";
-   
-  if ( system.getInfo( "platformName" ) == "Android" ) then
-     --for GPGS, reset "myCategory" to the string provided from the leaderboard setup in Google
-     myCategory = "CgkJtbq23agVEAIQAQ";
+  native.showAlert(playerName,"ok")
+  if playerName then
+    local myCategory = "basebile";
+     
+    if ( isAndroidSystem ) then
+       --for GPGS, reset "myCategory" to the string provided from the leaderboard setup in Google
+       myCategory = "CgkIoaim-N8WEAIQAQ";
+    end
+     
+    gameNetwork.request( "setHighScore",
+    {
+       localPlayerScore = { category=myCategory, value=tonumber(loadHighscore()) },
+       listener = postScoreSubmit
+    });
+  else
+    gameNetworkSetup();
   end
-   
-  gameNetwork.request( "setHighScore",
-  {
-     localPlayerScore = { category=myCategory, value=tonumber(highscore) },
-     listener = postScoreSubmit
-  });
 end
 
 ------------------------------------------------
@@ -122,15 +126,12 @@ end
 ---------------[[ ads n sheit ]]----------------
 ------------------------------------------------
 
-local function vungleListener( event )
+function vungleListener( event )
    -- Video ad not yet downloaded and available
    if ( event.type == "adStart" and event.isError ) then
-      if ( isAndroidSystem ) then
-         --ads:setCurrentProvider( "admob" )
-      else
-         ads:setCurrentProvider( "iAds" )
-      end
-      ads.show( "interstitial")
+      --if ( isAndroidSystem ) then
+      --   ads:setCurrentProvider( "admob" )
+      --end
    elseif ( event.type == "adEnd" ) then
       -- Ad was successfully shown and ended; hide the overlay so the app can resume.
       storyboard.hideOverlay()
@@ -141,15 +142,7 @@ local function vungleListener( event )
    return true
 end
  
-local function iAdsListener( event )
-   if ( event.isError ) then
-      storyboard.showOverlay( "selfpromo" )
-   end
-   ads:setCurrentProvider("vungle")
-   return true
-end
- 
-local function adMobListener( event )
+function adMobListener( event )
    if ( event.isError ) then
       storyboard.showOverlay( "selfpromo" )
    end
@@ -164,13 +157,15 @@ Runtime:addEventListener( "system", systemEvents );
 
 if ( isAndroidSystem ) then
    --ads.init( "admob", "your-ad-unit-id-here", adMobListener );
-   vungleId = "56d2923abc1a2d860300007e"
-else
-   ads.init( "iads", "otamm.corona.basebile", iAdsListener );
+   
 end
 ads.init( "vungle", vungleId, vungleListener );
 
 function showInterstitialAd()
-  print("AAAA");
-  ads:show("interstitial")
+  --native.showAlert("oi rs", tostring(ads.isAdAvailable()), {"OKOK"});
+  --if ads.isAdAvailable() then
+    if math.random(0,10) <= 4.5 then
+    --  ads.show("interstitial", { isAutoRotation = true, isAnimated = true } )
+    end
+  --end
 end

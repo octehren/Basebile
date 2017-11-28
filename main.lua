@@ -80,6 +80,7 @@ local soundBtn1 = display.newImage("soundOn.png");
 local soundBtn2 = display.newImage("soundOff.png");
 local pauseBtn1 = display.newImage("pauseOff.png");
 local pauseBtn2 = display.newImage("pauseOn.png");
+local rankBtn = display.newImage("btnRank.png");
 --[[ balls array & ball-related variables ]]
 local balls = {};
 local totalBalls = 0;
@@ -102,7 +103,7 @@ local pointsAwardedPerBat = 1; -- + 1 at each 3x batting streak
 highscore = 0; -- will be used in 'adsScoreAndGameNetwork.lua'
 --[[ external files ]]
 local ball = require("ball"); -- enables 'instantiateBall()' and 'vanish(obj)' functions
-require("adsScoreAndGameNetwork") -- enables 'saveScore()', 'loadScore()'
+local adsScoreAndGameNetwork = require("adsScoreAndGameNetwork"); -- enables 'saveScore()', 'loadScore()'
 --[[ high-score & game over screen ]]
 local highscoreContainer = display.newRoundedRect(centerX, centerY, 200, 300, 10);
 highscoreContainer.strokeWidth = 8; highscoreContainer:setStrokeColor(1, 0.95, 0.1); highscoreContainer:setFillColor(0.2, 0.4, 0.9);
@@ -123,8 +124,8 @@ local displayScoreAdder;
 local displayScoreAndLifeAdder;
 local presentAndPopulateGameOverPopup;
 local dismissGameOverPopup;
-local loadHighscore;
-local saveScore;
+--local loadHighscore;
+--local saveScore;
 local updateScores;
 local resumeGame;
 local pauseGame;
@@ -148,6 +149,7 @@ local setupStillAnimationTimer = timer.performWithDelay(10, function() end); -- 
 
 --[[ scene creation ]]
 local function createInitialScene()
+	rankBtn.isVisible = false; rankBtn.anchorY = 1; rankBtn.anchorX = 0;
 	highscore = loadHighscore();
 	displayHighscorePointsLabel.text = highscore;
 	local bg = display.newImage("mainScreenBG.png");
@@ -164,9 +166,12 @@ local function createInitialScene()
 	local function enableButtons()
 		soundBtn2.x = soundBtn1.x; soundBtn2.y = soundBtn1.y;
 		soundBtn2.isVisible = false;
+		rankBtn.x = centerX; rankBtn.y = centerY + 125;
+		rankBtn.isVisible = false;
 		playBtn:addEventListener("tap", goToGameScene);
 		soundBtn1:addEventListener("tap", turnSoundOnOrOff);
 		soundBtn2:addEventListener("tap", turnSoundOnOrOff);
+		rankBtn:addEventListener("tap", scorePost);
 	end
 	local function displayPlayAndSoundButtons() -- executed at the end of billy transition
 		audio.play(soundWoosh);
@@ -209,7 +214,7 @@ function goToGameScene() -- first load of game scene
 		createLivesGroup();
 		createPauseButtons();
 		displayAndPositionScore();
-		playBtn:toFront(); soundBtn2:toFront(); soundBtn1:toFront();
+		playBtn:toFront(); soundBtn2:toFront(); soundBtn1:toFront(); rankBtn:toFront();
 		display.remove(startSceneGroup);
 	end 
 	});
@@ -293,17 +298,19 @@ function presentAndPopulateGameOverPopup()
 	gameOverPopupGroup:toFront();
 	transition.to(gameOverPopupGroup, { y = centerY - 250, time = 400, onComplete = function() 
 		playBtn.isVisible = true;
+		rankBtn.isVisible = true; rankBtn:toFront();
 		if soundIsOn then
 			soundBtn1.isVisible = true;
 		else
 			soundBtn2.isVisible = true;
 		end
-		--showInterstitialAd(); 
+		showInterstitialAd(); 
 	  end 
 	} );
 end
 
 function dismissGameOverPopup()
+	rankBtn.isVisible = false;
 	transition.to(gameOverPopupGroup, { y = gameOverPopupGroup.contentHeight * 2, time = 400, onComplete = function() gameOverPopupGroup.y = -gameOverPopupGroup.contentHeight * 2; end})
 end
 
@@ -533,42 +540,6 @@ function displayScoreAndLifeAdder()
 	extraLifeText.y = centerY + 40; extraLifeText.alpha = 1;
 	transition.to(scoreAdderText, {y = centerY - 80, alpha = 0, time = 500 });
 	transition.to(extraLifeText, {y = centerY - 40, alpha = 0, time = 500 });
-end
-
---[[ score-loading, social network, ads, etc ]]
-
-function saveScore(value)
-	-- will save specified value to specified file
-    local theFile = "highscore.data";
-    local theValue = tostring(value);
-    local path = system.pathForFile( theFile, system.DocumentsDirectory );
-    -- io.open opens a file at path. returns nil if no file found
-    local file = io.open( path, "w+" );
-    if file then
-      -- write game score to the text file
-      file:write( theValue );
-      io.close( file );
-	end
-end
-
-function loadHighscore()
-	-- will load specified file, or create new file if it doesn't exist
-    local theFile = "highscore.data"
-    local path = system.pathForFile( theFile, system.DocumentsDirectory )
-    -- io.open opens a file at path. returns nil if no file found
-    local file = io.open( path, "r" )
-      if file then
-      -- read all contents of file into a string
-        local contents = file:read( "*a" )
-        io.close( file )
-        return tonumber(contents);
-      else
-        -- create file b/c it doesn't exist yet
-        file = io.open( path, "w" )
-        file:write( "0" )
-        io.close( file )
-        return 0;
-    end
 end
 
 function updateScores()
