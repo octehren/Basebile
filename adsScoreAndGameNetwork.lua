@@ -6,7 +6,6 @@ gameNetwork = require( "gameNetwork" )
 playerName = "";
 isAndroidSystem = system.getInfo("platformName") == "Android";
 ads = require("ads");
-;
 function loadLocalPlayerCallback( event )
    playerName = event.data.alias
    --saveSettings()  --save player data locally using your own "saveSettings()" function
