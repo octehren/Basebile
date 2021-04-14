@@ -32,28 +32,16 @@ local livesGroup = display.newGroup();
 local gameOverPopupGroup = display.newGroup();
 --[[ audio files ]]
 local soundIsOn = true;
-local audio1 = audio.loadSound("soundBatting.wav");
-local audio2 = audio.loadSound("soundGameOn.wav");
-local audio3 = audio.loadSound("soundCountdown.wav");
-local audio4 = audio.loadSound("soundBallSlow.wav");
-local audio5 = audio.loadSound("soundBallMedium.wav");
-local audio6 = audio.loadSound("soundBallFast.wav");
-local audio7 = audio.loadSound("soundGameOver.wav");
-local audio8 = audio.loadSound("soundWoosh.wav");
-local audio9 = audio.loadSound("soundStreakBoost.wav");
-local audio10 = audio.loadSound("soundMissedBall.wav");
---local audio11 = audio.loadSound("soundHit.wav");
-local soundBatting = audio1;
-local soundGameOn = audio2;
-local soundCountdown = audio3;
-local soundBallSlow = audio4;
-local soundBallMedium = audio5;
-local soundBallFast = audio6;
-local soundGameOver = audio7;
-local soundWoosh = audio8;
-local soundStreakBoost = audio9;
-local soundMissedBall = audio10;
---local soundHitCrowdCheer = audio11;
+local soundBatting = audio.loadSound("soundBatting.wav"); -- audio 1
+local soundGameOn = audio.loadSound("soundGameOn.wav"); -- 2
+local soundCountdown = audio.loadSound("soundCountdown.wav"); -- 3
+local soundBallSlow = audio.loadSound("soundBallSlow.wav"); -- 4
+local soundBallMedium = audio.loadSound("soundBallMedium.wav"); -- 5 
+local soundBallFast = audio.loadSound("soundBallFast.wav"); -- 6
+local soundGameOver = audio.loadSound("soundGameOver.wav"); -- 7
+local soundWoosh = audio.loadSound("soundWoosh.wav"); -- 8
+local soundStreakBoost = audio.loadSound("soundStreakBoost.wav"); -- 9
+local soundMissedBall = audio.loadSound("soundMissedBall.wav"); -- 10
 --[[ sprites & sprite data ]]
 --billy--
 local playerImageSheet = graphics.newImageSheet("billySprite0.png", { width = 30, height = 62, numFrames = 4, sheetContentWidth = 121, sheetContentHeight = 62 } );
