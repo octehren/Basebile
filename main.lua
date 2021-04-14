@@ -11,6 +11,7 @@ display.setStatusBar(display.HiddenStatusBar);
 --------------------------------------------------------------------------------------------
 require("ball"); -- enables 'instantiateBall()' and 'vanish(obj)' functions
 require("adsScoreAndGameNetwork"); -- enables 'saveScore()', 'loadScore()'
+
 --[[ positions, numbers, etc ]]
 local centerX = display.contentCenterX;
 local centerY = display.contentCenterY;
@@ -91,7 +92,8 @@ local outsArray = {};
 local score = 0;
 local battingStreak = 0; -- replenishes life and adds 1 to score at every 5x batting streak
 local pointsAwardedPerBat = 1; -- + 1 at each 3x batting streak
-highscore = 0; -- will be used in 'adsScoreAndGameNetwork.lua'
+-- global variables in init.lua
+--highscore = 0; -- will be used in 'adsScoreAndGameNetwork.lua'
 --[[ high-score & game over screen ]]
 local highscoreContainer = display.newRoundedRect(centerX, centerY, 200, 300, 10);
 highscoreContainer.strokeWidth = 8; highscoreContainer:setStrokeColor(1, 0.95, 0.1); highscoreContainer:setFillColor(0.2, 0.4, 0.9);
@@ -100,7 +102,8 @@ local animateBall;
 local transitionToGameScene;
 local bat;
 local checkIfBallToBeBattedWasIndeedBatted;
-playerMissedBall = nil; -- used in 'ball.lua', needs to be global.
+-- global variables in init.lua
+--playerMissedBall = nil; -- used in 'ball.lua', needs to be global.
 local repositionGameSceneElements;
 local createLivesGroup;
 local repositionLivesGroup;
