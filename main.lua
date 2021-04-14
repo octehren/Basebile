@@ -132,7 +132,8 @@ local pauseGame;
 local createPauseButtons;
 --[[ time delays (ms) ]]
 local hitAnimationDelay = 30;
-local scorePopupAnimationDelay = hitAnimationDelay * 14;
+local scorePopupAnimationDelay = hitAnimationDelay * 9;
+local soundStreakPlayDelay = scorePopupAnimationDelay * 0.8;
 --[[ font-handling ]]
 local scoreText = display.newText("0", centerX * 2 - 15, 5, "PixTall", 32); scoreText.isVisible = false;
 local scoreAdderText = display.newText("x2", centerX, -centerY, "PixTall", 40);
@@ -428,7 +429,9 @@ function bat(event)
 									-- 'extra point' animation
 									timer.performWithDelay(scorePopupAnimationDelay, displayScoreAdder);
 								end
-								audio.play(soundStreakBoost);
+								timer.performWithDelay(soundStreakPlayDelay, function()
+									audio.play(soundStreakBoost);
+								end);
 							end
 							--return;
 						end
