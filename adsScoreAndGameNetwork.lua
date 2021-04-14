@@ -5,6 +5,7 @@
 gameNetwork = require( "gameNetwork" )
 playerName = "";
 isAndroidSystem = system.getInfo("platformName") == "Android";
+isNotLoggedInGameNetwork = true;
 --ads = require("ads");
 function loadLocalPlayerCallback( event )
    playerName = event.data.alias
@@ -21,10 +22,13 @@ function gpgsInitCallback( event )
 end
  
 function gameNetworkSetup()
-   if ( isAndroidSystem ) then
-      gameNetwork.init( "google", gpgsInitCallback );
-   else
-      gameNetwork.init( "gamecenter", gameNetworkLoginCallback )
+   if isNotLoggedInGameNetwork then
+      if ( isAndroidSystem ) then
+         gameNetwork.init( "google", gpgsInitCallback );
+      else
+         gameNetwork.init( "gamecenter", gameNetworkLoginCallback )
+      end
+      isNotLoggedInGameNetwork = false;
    end
 end
  
@@ -38,7 +42,8 @@ function systemEvents( event )
    elseif ( event.type == "applicationExit" ) then
       print( "exiting.............................." )
    elseif ( event.type == "applicationStart" ) then
-      gameNetworkSetup()  --login to the network here
+      print( "ditched setup of game network on application start due to annoyance" )
+      --gameNetworkSetup()  --login to the network here
    end
    return true
 end

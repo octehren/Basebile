@@ -74,6 +74,7 @@ local throwerThrowingImageSheet = graphics.newImageSheet("throwerThrowingSprite0
 local throwerImageDataThrowing = { name = "throw", sheet = throwerThrowingImageSheet, start = 1, count = 3, time = 300 };
 --thrower sprite--
 local throwerSprite = display.newSprite(throwerImageSheet, { throwerImageDataWalk, throwerImageDataStill, throwerImageDataThrowing } );
+
 --[[ buttons ]]
 local playBtn = display.newImage("playBtn.png");
 local soundBtn1 = display.newImage("soundOn.png");
@@ -166,6 +167,7 @@ local function createInitialScene()
 	local logo = display.newImage("basebileLogo.png"); logo.anchorY = 0; logo.y = -500; logo.x = centerX;
 	-- adds above elements to startSceneGroup so they can be moved all at once
 	startSceneGroup:insert(bg); startSceneGroup:insert(billy); startSceneGroup:insert(logo);
+
 	-- adds game background to future use game group;
 	local function enableButtons()
 		soundBtn2.x = soundBtn1.x; soundBtn2.y = soundBtn1.y;
