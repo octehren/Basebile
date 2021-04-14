@@ -130,6 +130,9 @@ local updateScores;
 local resumeGame;
 local pauseGame;
 local createPauseButtons;
+--[[ time delays (ms) ]]
+local hitAnimationDelay = 30;
+local scorePopupAnimationDelay = hitAnimationDelay * 14;
 --[[ font-handling ]]
 local scoreText = display.newText("0", centerX * 2 - 15, 5, "PixTall", 32); scoreText.isVisible = false;
 local scoreAdderText = display.newText("x2", centerX, -centerY, "PixTall", 40);
@@ -404,7 +407,7 @@ function bat(event)
 					if balls[i].y >= successfulBatBallY then
 						if balls[i].y <= tooLateToBatBallPositionY then
 							audio.play(soundBatting);
-							timer.performWithDelay(30, function() balls[i]:successfulHit(); end);
+							timer.performWithDelay(hitAnimationDelay, function() balls[i]:successfulHit(); end);
 							score = score + pointsAwardedPerBat;
 							scoreText.text = score;
 							battingStreak = battingStreak + 1;
@@ -414,16 +417,16 @@ function bat(event)
 									-- 'extra point & extra life' animation
 									if missesUntilOut < 3 then
 										-- playerMissedBall() performed with delay of 50, life-displaying and score-adding functions are performed with delay of 45
-										timer.performWithDelay(45, function()
+										timer.performWithDelay(scorePopupAnimationDelay, function()
 											displayScoreAndLifeAdder();
 											restoreOneLife();
 										end);
 									else
-										timer.performWithDelay(45, displayScoreAdder);
+										timer.performWithDelay(scorePopupAnimationDelay, displayScoreAdder);
 									end
 								else
 									-- 'extra point' animation
-									timer.performWithDelay(45, displayScoreAdder);
+									timer.performWithDelay(scorePopupAnimationDelay, displayScoreAdder);
 								end
 								audio.play(soundStreakBoost);
 							end
