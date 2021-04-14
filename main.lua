@@ -9,6 +9,8 @@ display.setStatusBar(display.HiddenStatusBar);
 --------------------------------------------------------------------------------------------
 -----------------------------[[ local scene variables ]]------------------------------------
 --------------------------------------------------------------------------------------------
+require("ball"); -- enables 'instantiateBall()' and 'vanish(obj)' functions
+require("adsScoreAndGameNetwork"); -- enables 'saveScore()', 'loadScore()'
 --[[ positions, numbers, etc ]]
 local centerX = display.contentCenterX;
 local centerY = display.contentCenterY;
@@ -90,9 +92,6 @@ local score = 0;
 local battingStreak = 0; -- replenishes life and adds 1 to score at every 5x batting streak
 local pointsAwardedPerBat = 1; -- + 1 at each 3x batting streak
 highscore = 0; -- will be used in 'adsScoreAndGameNetwork.lua'
---[[ external files ]]
-local ball = require("ball"); -- enables 'instantiateBall()' and 'vanish(obj)' functions
-local adsScoreAndGameNetwork = require("adsScoreAndGameNetwork"); -- enables 'saveScore()', 'loadScore()'
 --[[ high-score & game over screen ]]
 local highscoreContainer = display.newRoundedRect(centerX, centerY, 200, 300, 10);
 highscoreContainer.strokeWidth = 8; highscoreContainer:setStrokeColor(1, 0.95, 0.1); highscoreContainer:setFillColor(0.2, 0.4, 0.9);
