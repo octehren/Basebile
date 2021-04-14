@@ -5,21 +5,26 @@
 
 settings =
 {
-		plugins = 
+	splashScreen = 
+	{
+		enable = true,
+		image = "./Default.png"
+	}
+	plugins = 
+	{
+		["CoronaProvider.gameNetwork.apple"] =
 		{
-			["CoronaProvider.gameNetwork.apple"] =
-	        {
-	            publisherId = "com.coronalabs",
-	            supportedPlatforms = { iphone=true, ["iphone-sim"]=true, android = false }
-	        },
-	        --key is the name passed to the Lua "require()"
-		    --[[["CoronaProvider.gameNetwork.google"] =
-		    {
-		       --required!
-		       publisherId = "com.coronalabs",
-		       supportedPlatforms = { android = true, iphone = false, ["iphone-sim"] = false },
-		    },
+			publisherId = "com.coronalabs",
+			supportedPlatforms = { iphone=true, ["iphone-sim"]=true, android = false }
 		},
+		--key is the name passed to the Lua "require()"
+		--[[["CoronaProvider.gameNetwork.google"] =
+		{
+			--required!
+			publisherId = "com.coronalabs",
+			supportedPlatforms = { android = true, iphone = false, ["iphone-sim"] = false },
+		},
+	},
 	
 	orientation =
 	{
