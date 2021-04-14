@@ -7,8 +7,8 @@ settings =
 {
 	splashScreen = 
 	{
-		enable = true,
-		image = "./Default.png"
+		enable = false,
+		image = "Default.png"
 	},
 	plugins = 
 	{
@@ -18,17 +18,13 @@ settings =
 			supportedPlatforms = { iphone=true, ["iphone-sim"]=true, android = false }
 		},
 		--key is the name passed to the Lua "require()"
-		--[[["CoronaProvider.gameNetwork.google"] =
+		
+		["CoronaProvider.gameNetwork.google"] =
 		{
 			--required!
 			publisherId = "com.coronalabs",
 			supportedPlatforms = { android = true, iphone = false, ["iphone-sim"] = false },
 		},
-		["CoronaProvider.ads.admob"] =
-		{
-				publisherId = "com.coronalabs",
-				supportedPlatforms = { android = true, iphone = false, ["iphone-sim"] = false },
-		},]]
 	},
 	
 	orientation =

@@ -5,15 +5,14 @@ application =
 	{
 		width = 320,
 		height = 480, 
-		scale = "zoomEven",
+		scale = "letterbox",
 		fps = 60,
 		
-		--[[
 		imageSuffix =
 		{
-			    ["@2x"] = 2,
+			    ["@2x"] = 1.5,
+				["@3x"] = 2
 		},
-		--]]
 	},
 
 	--[[
