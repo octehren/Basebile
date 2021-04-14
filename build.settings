@@ -7,11 +7,6 @@ settings =
 {
 		plugins = 
 		{
-			["CoronaProvider.ads.vungle"] =
-			{
-			      publisherId = "com.vungle",
-			      supportedPlatforms = { iphone = true, android = true, ["iphone-sim"]=true },
-			},
 			["CoronaProvider.gameNetwork.apple"] =
 	        {
 	            publisherId = "com.coronalabs",
@@ -24,11 +19,6 @@ settings =
 		       publisherId = "com.coronalabs",
 		       supportedPlatforms = { android = true, iphone = false, ["iphone-sim"] = false },
 		    },
-		    ["CoronaProvider.ads.admob"] =
-			{
-			      publisherId = "com.coronalabs",
-			      supportedPlatforms = { android = true, iphone = false, ["iphone-sim"] = false },
-			},]]
 		},
 	
 	orientation =
