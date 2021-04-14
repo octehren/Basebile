@@ -9,7 +9,7 @@ settings =
 	{
 		enable = true,
 		image = "./Default.png"
-	}
+	},
 	plugins = 
 	{
 		["CoronaProvider.gameNetwork.apple"] =
@@ -24,6 +24,11 @@ settings =
 			publisherId = "com.coronalabs",
 			supportedPlatforms = { android = true, iphone = false, ["iphone-sim"] = false },
 		},
+		["CoronaProvider.ads.admob"] =
+		{
+				publisherId = "com.coronalabs",
+				supportedPlatforms = { android = true, iphone = false, ["iphone-sim"] = false },
+		},]]
 	},
 	
 	orientation =
