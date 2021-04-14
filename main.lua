@@ -308,7 +308,8 @@ function presentAndPopulateGameOverPopup()
 		else
 			soundBtn2.isVisible = true;
 		end
-		showInterstitialAd(); 
+		-- removed ads
+		--showInterstitialAd(); 
 	  end 
 	} );
 end

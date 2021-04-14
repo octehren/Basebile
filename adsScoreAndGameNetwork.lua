@@ -5,7 +5,7 @@
 gameNetwork = require( "gameNetwork" )
 playerName = "";
 isAndroidSystem = system.getInfo("platformName") == "Android";
-ads = require("ads");
+--ads = require("ads");
 function loadLocalPlayerCallback( event )
    playerName = event.data.alias
    --saveSettings()  --save player data locally using your own "saveSettings()" function
@@ -125,46 +125,46 @@ end
 ---------------[[ ads n sheit ]]----------------
 ------------------------------------------------
 
-function vungleListener( event )
-   -- Video ad not yet downloaded and available
-   if ( event.type == "adStart" and event.isError ) then
-      --if ( isAndroidSystem ) then
-      --   ads:setCurrentProvider( "admob" )
-      --end
-   elseif ( event.type == "adEnd" ) then
-      -- Ad was successfully shown and ended; hide the overlay so the app can resume.
-      storyboard.hideOverlay()
+-- function vungleListener( event )
+--    -- Video ad not yet downloaded and available
+--    if ( event.type == "adStart" and event.isError ) then
+--       --if ( isAndroidSystem ) then
+--       --   ads:setCurrentProvider( "admob" )
+--       --end
+--    elseif ( event.type == "adEnd" ) then
+--       -- Ad was successfully shown and ended; hide the overlay so the app can resume.
+--       storyboard.hideOverlay()
  
-   else
-      print( "Received event", event.type )
-   end
-   return true
-end
+--    else
+--       print( "Received event", event.type )
+--    end
+--    return true
+-- end
  
-function adMobListener( event )
-   if ( event.isError ) then
-      storyboard.showOverlay( "selfpromo" )
-   end
-   return true
-end
+-- function adMobListener( event )
+--    if ( event.isError ) then
+--       storyboard.showOverlay( "selfpromo" )
+--    end
+--    return true
+-- end
 
 ------------------------------------------------
 -----------[[ initializing stuff ]]-------------
 ------------------------------------------------
 
-Runtime:addEventListener( "system", systemEvents );
+-- Runtime:addEventListener( "system", systemEvents );
 
-if ( isAndroidSystem ) then
-   --ads.init( "admob", "your-ad-unit-id-here", adMobListener );
-   
-end
-ads.init( "vungle", vungleId, vungleListener );
+-- if ( isAndroidSystem ) then
+--    --ads.init( "admob", "your-ad-unit-id-here", adMobListener );
 
-function showInterstitialAd()
-  --native.showAlert("oi rs", tostring(ads.isAdAvailable()), {"OKOK"});
-  --if ads.isAdAvailable() then
-    if math.random(0,10) <= 4.5 then
-    --  ads.show("interstitial", { isAutoRotation = true, isAnimated = true } )
-    end
-  --end
-end
+-- end
+-- ads.init( "vungle", vungleId, vungleListener );
+
+-- function showInterstitialAd()
+--   --native.showAlert("oi rs", tostring(ads.isAdAvailable()), {"OKOK"});
+--   --if ads.isAdAvailable() then
+--     if math.random(0,10) <= 4.5 then
+--     --  ads.show("interstitial", { isAutoRotation = true, isAnimated = true } )
+--     end
+--   --end
+-- end
