@@ -179,7 +179,7 @@ local function createInitialScene()
 		playBtn:addEventListener("tap", goToGameScene);
 		soundBtn1:addEventListener("tap", turnSoundOnOrOff);
 		soundBtn2:addEventListener("tap", turnSoundOnOrOff);
-		rankBtn:addEventListener("tap", scorePost);
+		--rankBtn:addEventListener("tap", scorePost);
 	end
 	local function displayPlayAndSoundButtons() -- executed at the end of billy transition
 		audio.play(soundWoosh);
@@ -227,7 +227,7 @@ function goToGameScene() -- first load of game scene
 		createLivesGroup();
 		createPauseButtons();
 		displayAndPositionScore();
-		playBtn:toFront(); soundBtn2:toFront(); soundBtn1:toFront(); rankBtn:toFront();
+		playBtn:toFront(); soundBtn2:toFront(); soundBtn1:toFront(); --rankBtn:toFront();
 		display.remove(startSceneGroup);
 	end 
 	});
@@ -312,7 +312,7 @@ function presentAndPopulateGameOverPopup()
 	gameOverPopupGroup:toFront();
 	transition.to(gameOverPopupGroup, { y = centerY - 250, time = 400, onComplete = function() 
 		playBtn.isVisible = true;
-		rankBtn.isVisible = true; rankBtn:toFront();
+		--rankBtn.isVisible = true; rankBtn:toFront();
 		if soundIsOn then
 			soundBtn1.isVisible = true;
 		else
