@@ -29,10 +29,13 @@ local startSceneGroup = display.newGroup();
 local gameSceneGroup = display.newGroup();
 local livesGroup = display.newGroup();
 local gameOverPopupGroup = display.newGroup();
--- this one below is to prevent pre-loaded assets from appearing out of screen bonds before being used
+-- these ones below are to prevent pre-loaded assets from appearing out of screen bonds before being used
+-- floatingImagesGroup0 becomes visible as soon as the game scene is created
+-- floatingImagesGroup becomes visible just before the characters walk on screen & game starts
+local floatingImagesGroup0 = display.newGroup();
 local floatingImagesGroup = display.newGroup();
 
-local animationBall = display.newImage("bigBall.png"); animationBall.anchorX = 0.5; floatingImagesGroup:insert(animationBall);
+local animationBall = display.newImage("bigBall.png"); animationBall.anchorX = 0.5; floatingImagesGroup0:insert(animationBall);
 local groundForPlayer = display.newImage("groundForPlayer0.png"); groundForPlayer.rotation = 180; groundForPlayer.anchorY = 0; floatingImagesGroup:insert(groundForPlayer);
 local groundForThrower = display.newImage("groundForThrower0.png"); floatingImagesGroup:insert(groundForThrower); --groundForThrower.anchorY = 0; 
 local outLabel = display.newImage("outLabel.png"); floatingImagesGroup:insert(outLabel);
@@ -58,7 +61,7 @@ local playerBattingImageSheet = graphics.newImageSheet("billySpriteBatting0.png"
 local playerImageDataBatting = { name = "bat", sheet = playerBattingImageSheet, start = 1, count = 4, loopCount = 1, time = 300 };
 --billy sprite--
 local playerSprite = display.newSprite(playerImageSheet, { playerImageDataWalk, playerImageDataStill, playerImageDataBatting });
-
+floatingImagesGroup:insert(playerSprite);
 --thrower--
 local throwerImageSheet = graphics.newImageSheet("throwerSprite0.png", {width = 33, height = 45, numFrames = 4, sheetContentWidth = 132, sheetContentHeight = 45 } );
 local throwerImageDataWalk = { name = "walk", sheet = throwerImageSheet, start = 3, count = 2, time = 250 };
@@ -68,7 +71,7 @@ local throwerThrowingImageSheet = graphics.newImageSheet("throwerThrowingSprite0
 local throwerImageDataThrowing = { name = "throw", sheet = throwerThrowingImageSheet, start = 1, count = 3, time = 300 };
 --thrower sprite--
 local throwerSprite = display.newSprite(throwerImageSheet, { throwerImageDataWalk, throwerImageDataStill, throwerImageDataThrowing } );
-
+floatingImagesGroup:insert(throwerSprite);
 --[[ buttons ]]
 local playBtn = display.newImage("playBtn.png");
 local soundBtn1 = display.newImage("soundOn.png");
@@ -76,6 +79,7 @@ local soundBtn2 = display.newImage("soundOff.png");
 local pauseBtn1 = display.newImage("pauseOff.png");
 local pauseBtn2 = display.newImage("pauseOn.png");
 local rankBtn = display.newImage("btnRank.png");
+--floatingImagesGroup:insert(playBtn);
 --[[ balls array & ball-related variables ]]
 local balls = {};
 local totalBalls = 0;
@@ -148,6 +152,7 @@ local setupStillAnimationTimer = timer.performWithDelay(10, function() end); -- 
 --[[ scene creation ]]
 local function createInitialScene()
 	-- makes all preloaded images invisible so they won't appear in weird places such as behind the background, etc
+	floatingImagesGroup0.isVisible = false;
 	floatingImagesGroup.isVisible = false;
 	rankBtn.isVisible = false; rankBtn.anchorY = 1; rankBtn.anchorX = 0;
 	highscore = loadHighscore();
@@ -192,11 +197,12 @@ end
 function goToGameScene() -- first load of game scene
 	audio.stop();
 	-- everything positioned, able to make stuff visible again
-	floatingImagesGroup.isVisible = true;
+	floatingImagesGroup0.isVisible = true;
 	playBtn:removeEventListener("tap", goToGameScene);
 	playBtn.isVisible = false; soundBtn1.isVisible = false; soundBtn2.isVisible = false;
 	missesUntilOut = 3;
 	local bg = display.newImage("gameFieldBG0.png");
+	--bg:scale(2,2)
 	bg.anchorY = 1; bg.anchorX = 0.5; bg.y = 0; bg.x = centerX;
 	groundForThrower.x = centerX; groundForThrower.y = centerY * -2;
 	gameSceneGroup:insert(groundForThrower); gameSceneGroup:insert(groundForPlayer);
@@ -204,6 +210,7 @@ function goToGameScene() -- first load of game scene
 	startSceneGroup.anchorY = 0;
 	gameSceneGroup:toFront();
 	throwerSprite:toFront();
+	floatingImagesGroup0:toFront();
 	floatingImagesGroup:toFront();
 	for i = 0, 4 do
 		balls[i] = instantiateBall(centerX, initialBallPositionY, centerY * 2, centerX * 2);
@@ -277,6 +284,7 @@ function animateBall() --ball animation for scene transition
 end
 
 function displayPlayerAndOpponent()
+	floatingImagesGroup.isVisible = true;
 	playerSprite.anchorY = 1; playerSprite.y = visibleDisplaySizeY; playerSprite.x = centerX;
 	playerSprite:toFront();
 	throwerSprite.anchorY = 1; throwerSprite.y = -10; throwerSprite.x = centerX - (0.25 * throwerSprite.contentHeight / 4) -- 4 here = the number of sprites in throwerSprite
