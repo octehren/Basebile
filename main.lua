@@ -25,14 +25,17 @@ local transitionTimeInMiliseconds = 500;
 local gamePaused = false;
 local pausesLeft = 3;
 --[[ images & image groups ]]
-local animationBall = display.newImage("bigBall.png"); animationBall.anchorX = 0.5;
-local groundForPlayer = display.newImage("groundForPlayer0.png"); groundForPlayer.rotation = 180; groundForPlayer.anchorY = 0;
-local groundForThrower = display.newImage("groundForThrower0.png"); --groundForThrower.anchorY = 0;
-local outLabel = display.newImage("outLabel.png");
 local startSceneGroup = display.newGroup();
 local gameSceneGroup = display.newGroup();
 local livesGroup = display.newGroup();
 local gameOverPopupGroup = display.newGroup();
+-- this one below is to prevent pre-loaded assets from appearing out of screen bonds before being used
+local floatingImagesGroup = display.newGroup();
+
+local animationBall = display.newImage("bigBall.png"); animationBall.anchorX = 0.5; floatingImagesGroup:insert(animationBall);
+local groundForPlayer = display.newImage("groundForPlayer0.png"); groundForPlayer.rotation = 180; groundForPlayer.anchorY = 0; floatingImagesGroup:insert(groundForPlayer);
+local groundForThrower = display.newImage("groundForThrower0.png"); floatingImagesGroup:insert(groundForThrower); --groundForThrower.anchorY = 0; 
+local outLabel = display.newImage("outLabel.png"); floatingImagesGroup:insert(outLabel);
 --[[ audio files ]]
 local soundIsOn = true;
 local soundBatting = audio.loadSound("soundBatting.wav"); -- audio 1
@@ -144,11 +147,15 @@ local setupStillAnimationTimer = timer.performWithDelay(10, function() end); -- 
 
 --[[ scene creation ]]
 local function createInitialScene()
+	-- makes all preloaded images invisible so they won't appear in weird places such as behind the background, etc
+	floatingImagesGroup.isVisible = false;
 	rankBtn.isVisible = false; rankBtn.anchorY = 1; rankBtn.anchorX = 0;
 	highscore = loadHighscore();
 	displayHighscorePointsLabel.text = highscore;
 	local bg = display.newImage("mainScreenBG.png");
 	bg.x = centerX; bg.y = centerY;
+	bg:toFront();
+	--bg:scale(2, 2)
 	local billy = display.newImage("charScreenBG.png");
 	billy.anchorX = 1; billy.anchorY = 1; billy.x = centerX * 5; -- places char far from screen center
 	billy.y = centerY * 2; -- places char at bottom of screen
@@ -184,6 +191,8 @@ end
 
 function goToGameScene() -- first load of game scene
 	audio.stop();
+	-- everything positioned, able to make stuff visible again
+	floatingImagesGroup.isVisible = true;
 	playBtn:removeEventListener("tap", goToGameScene);
 	playBtn.isVisible = false; soundBtn1.isVisible = false; soundBtn2.isVisible = false;
 	missesUntilOut = 3;
@@ -195,6 +204,7 @@ function goToGameScene() -- first load of game scene
 	startSceneGroup.anchorY = 0;
 	gameSceneGroup:toFront();
 	throwerSprite:toFront();
+	floatingImagesGroup:toFront();
 	for i = 0, 4 do
 		balls[i] = instantiateBall(centerX, initialBallPositionY, centerY * 2, centerX * 2);
 		balls[i]:toFront();
